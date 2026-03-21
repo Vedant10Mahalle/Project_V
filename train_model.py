@@ -17,13 +17,16 @@ try:
     missed_classes = np.random.randint(0, 10, n_samples)
 
     # 2. Heuristic baseline logic for dropping out (Adding noise for ML realism)
-    risk_score = (
+    base_score = (
         (100 - attendance) * 0.45 + 
-        (10 - sgpa) * 6 + 
+        (10 - sgpa) * 8 + 
         stress * 2.5 + 
         missed_classes * 3 + 
         np.random.normal(0, 6, n_samples) # Natural variance noise
     )
+    
+    # ML Override: Students with excellent grades are extremely unlikely to drop out randomly
+    risk_score = np.where(sgpa >= 8.5, np.minimum(base_score, np.random.uniform(5, 30, n_samples)), base_score)
 
     # 3. Define target variable (1 = High Risk of Drop/Failure, 0 = Safe)
     target = (risk_score > 45).astype(int)

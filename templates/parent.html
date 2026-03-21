@@ -81,8 +81,8 @@
             </div>
 
             <div>
-                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">System Risk Prediction</span>
-                <div style="font-size: 1.8rem; font-weight: 600;" class="{% if risk.dropout_prob > 60 %}text-danger{% else %}text-primary{% endif %}">{{ risk.dropout_prob }}% <span style="font-size: 1.2rem; color: #94a3b8;">(ML Dropout Risk)</span></div>
+                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">Machine Learning AI Assessment ({{ ml_status.algorithm|default('RandomForest') }})</span>
+                <div style="font-size: 1.8rem; font-weight: 600;" class="{% if risk.dropout_prob > 60 %}text-danger{% else %}text-primary{% endif %}">{{ risk.dropout_prob }}% <span style="font-size: 1.2rem; color: #94a3b8;">(Calculated Dropout Probability)</span></div>
             </div>
         </div>
 

@@ -16,6 +16,16 @@ except FileNotFoundError:
 app = Flask(__name__)
 app.secret_key = "super_secret_nmam_key"
 
+@app.context_processor
+def inject_ml_status():
+    return dict(ml_status={
+        "active": _ML_MODEL is not None,
+        "algorithm": "Random Forest Classifier",
+        "features": ["Attendance (%)", "SGPA", "Stress Level (1-10)", "Missed Classes"],
+        "trees": 100,
+        "max_depth": 6
+    })
+
 # ---------- Data Loaders ----------
 def get_df(filepath):
     if not os.path.exists(filepath): return pd.DataFrame()
@@ -23,7 +33,10 @@ def get_df(filepath):
     except pd.errors.EmptyDataError: return pd.DataFrame()
 
 def save_df(df, filepath):
-    df.to_csv(filepath, index=False)
+    try:
+        df.to_csv(filepath, index=False)
+    except Exception as e:
+        print(f"CRITICAL WARN: Could not save to {filepath} - {str(e)}. (File might be locked by Excel or missing permissions)")
 
 def load_teacher_dashboard_data(teacher_id):
     students_df = get_df("data/students.csv")
@@ -192,6 +205,13 @@ def calculate_multi_factor_risk(student_record):
         elif final_level == "Medium": base_prob = 40 + (acad_score * 3) + (beh_score * 3)
         else: base_prob = 5 + (acad_score * 3)
         dropout_prob = round(min(98, base_prob))
+        
+    # Hardcoded Safety Net for Exceptional students
+    if sgpa >= 8.5:
+        dropout_prob = min(dropout_prob, 12)
+        acad_level = "Low"
+        if final_level == "High": final_level = "Medium"
+        if dropout_prob <= 15: final_level = "Low"
 
     confidence_score = round(min(0.95, 0.70 + (0.02 * my_feed_len)), 2)
     
@@ -325,18 +345,22 @@ def select_mentor():
     if not session.get("needs_mentor"): return redirect(url_for("home"))
     
     if request.method == "POST":
-        chosen_mentor = request.form.get("mentor_id")
-        usn = session.get("user_id")
-        df = get_df("data/students.csv")
         try:
-            idx = df[df['usn'].astype(str) == str(usn)].index[0]
-            df.loc[idx, 'mentor_id'] = chosen_mentor
-            save_df(df, "data/students.csv")
-        except IndexError:
-            pass # Failsafe if not found
-        session["needs_mentor"] = False
-        session["mentor_id"] = chosen_mentor
-        return redirect(url_for("home"))
+            chosen_mentor = request.form.get("mentor_id")
+            usn = session.get("user_id")
+            df = get_df("data/students.csv")
+            try:
+                idx = df[df['usn'].astype(str) == str(usn)].index[0]
+                df.loc[idx, 'mentor_id'] = chosen_mentor
+                save_df(df, "data/students.csv")
+            except IndexError:
+                pass # Failsafe if not found
+            session["needs_mentor"] = False
+            session["mentor_id"] = chosen_mentor
+            return redirect(url_for("home"))
+        except Exception as e:
+            flash(f"System Error assigning mentor: {str(e)}")
+            return redirect(url_for("login"))
         
     teachers = get_df("data/teachers.csv").to_dict(orient="records")
     return render_template("select_mentor.html", teachers=teachers)
@@ -416,24 +440,30 @@ def notify_students():
 
 @app.route("/student")
 def student():
-    if session.get("role") != "student": return redirect(url_for("login"))
-    if session.get("needs_mentor"): return redirect(url_for("select_mentor"))
-    
-    profile = load_student_profile(session.get("user_id"))
-    if not profile:
+    try:
+        if session.get("role") != "student": return redirect(url_for("login"))
+        if session.get("needs_mentor"): return redirect(url_for("select_mentor"))
+        
+        profile = load_student_profile(session.get("user_id"))
+        if not profile:
+            session.clear()
+            flash("Error loading profile. Please log in again.", "error")
+            return redirect(url_for("login"))
+        
+        # Check notifications
+        df = get_df("data/notifications.csv")
+        active_alert = False
+        if not df.empty and profile.get("mentor_id"):
+            if 'teacher_id' in df.columns and 'active' in df.columns:
+                notifs = df[df['teacher_id'].astype(str) == str(profile["mentor_id"])]
+                if not notifs.empty and str(notifs.iloc[0]["active"]) == "True":
+                    active_alert = True
+                
+        return render_template("student.html", student=profile, active_alert=active_alert)
+    except Exception as e:
         session.clear()
-        flash("Error loading profile. Please log in again.", "error")
+        flash(f"System Recovery from Dashboard Crash: {str(e)}", "error")
         return redirect(url_for("login"))
-    
-    # Check notifications
-    df = get_df("data/notifications.csv")
-    active_alert = False
-    if not df.empty and profile.get("mentor_id"):
-        notifs = df[df['teacher_id'].astype(str) == str(profile["mentor_id"])]
-        if not notifs.empty and str(notifs.iloc[0]["active"]) == "True":
-            active_alert = True
-            
-    return render_template("student.html", student=profile, active_alert=active_alert)
 
 @app.route("/student/dismiss_alert")
 def dismiss_alert():
