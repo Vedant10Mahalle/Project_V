@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Registration</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 0;">
+
+<div class="glass-container" style="max-width: 500px; padding: 40px; margin: 20px; width: 100%;">
+    
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="margin: 0 0 10px 0;">Student Onboarding</h2>
+        <p style="color: #94a3b8; font-size: 0.95rem; margin: 0;">Register your profile into the institutional tracking database.</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;">
+            {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/register">
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>University ID (USN)</label>
+            <input type="text" name="usn" placeholder="e.g. NNM23RI099" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="John Doe" required>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Branch / Major</label>
+                <input type="text" name="branch" placeholder="e.g. Robotics and AI" required>
+            </div>
+            <div class="form-group">
+                <label>Current Semester</label>
+                <input type="number" name="semester" min="1" max="8" value="1" required>
+            </div>
+        </div>
+
+        <div class="form-grid" style="margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Parent/Guardian Name</label>
+                <input type="text" name="parent_name" placeholder="Mr. Robert Doe" required>
+            </div>
+            <div class="form-group">
+                <label>Parent Mobile Number</label>
+                <input type="tel" name="parent_phone" placeholder="+91 9876543210" pattern="[\+0-9\-\s]+" required>
+            </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 30px;">
+            <label>Set Secure Password</label>
+            <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; padding: 14px; font-size: 1rem; margin-bottom: 15px;">Create Student Record</button>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <a href="/login" style="color: #60a5fa; text-decoration: none; font-size: 0.9rem;">← Back to Login Portal</a>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

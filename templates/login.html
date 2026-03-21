@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Risk Prediction System Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .role-selector {
+            display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;
+        }
+        .role-btn {
+            flex: 1; min-width: 70px; padding: 11px 8px; text-align: center; background: rgba(15, 23, 42, 0.4); 
+            border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
+            color: #94a3b8; font-weight: 500; transition: all 0.3s ease; font-size: 0.88rem;
+        }
+        .role-btn.active {
+            background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #60a5fa;
+        }
+        .role-btn.admin-btn.active {
+            background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #a5b4fc;
+        }
+        input[type="radio"] { display: none; }
+    </style>
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+
+<div class="glass-container" style="max-width: 400px; padding: 40px; margin: 20px;">
+    
+    <div style="text-align: center; margin-bottom: 30px;">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#blue-purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                <defs><linearGradient id="blue-purple" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#3b82f6" /><stop offset="100%" stop-color="#8b5cf6" /></linearGradient></defs>
+            </svg>
+        </div>
+        <h1 style="font-size: 1.8rem; margin: 0 0 10px 0;">Student Risk Prediction System</h1>
+        <p style="color: #94a3b8; margin: 0; font-size: 0.95rem;">Please select your role and sign in.</p>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;">
+            {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/login">
+        <!-- Role Selection -->
+        <div class="role-selector" id="roleContainer">
+            <label class="role-btn active" id="btn-student">
+                <input type="radio" name="role" value="student" checked onchange="updateRole('student')"> Student
+            </label>
+            <label class="role-btn" id="btn-teacher">
+                <input type="radio" name="role" value="teacher" onchange="updateRole('teacher')"> Teacher
+            </label>
+            <label class="role-btn" id="btn-parent">
+                <input type="radio" name="role" value="parent" onchange="updateRole('parent')"> Parent
+            </label>
+            <label class="role-btn admin-btn" id="btn-admin">
+                <input type="radio" name="role" value="admin" onchange="updateRole('admin')"> ⚙ Admin
+            </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label id="username-label">USN / ID</label>
+            <input type="text" name="username" placeholder="Enter your ID" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 30px;">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; padding: 14px; font-size: 1rem; margin-bottom: 15px;">Sign In securely</button>
+        
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="/forgot_password" style="color: #60a5fa; text-decoration: none; font-size: 0.9rem;">Forgot your password? Reset it here.</a>
+        </div>
+
+        <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 10px;">
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">Are you a new student?</p>
+            <a href="/register" class="btn secondary" style="width: 100%; display: block; box-sizing: border-box;">Register Student Profile</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function updateRole(role) {
+        ['student','teacher','parent','admin'].forEach(r =>
+            document.getElementById('btn-' + r).classList.remove('active'));
+        document.getElementById('btn-' + role).classList.add('active');
+        
+        let label = document.getElementById('username-label');
+        if (role === 'student') label.innerText = 'University ID (USN)';
+        else if (role === 'teacher') label.innerText = 'Faculty ID';
+        else if (role === 'admin') label.innerText = 'Admin Username';
+        else label.innerText = 'Parent Access ID';
+    }
+</script>
+
+</body>
+</html>

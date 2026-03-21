@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="glass-container large" style="max-width: 800px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="margin: 0;">Student Portal</h2>
+            <div style="color: #64748b; font-family: monospace; margin-top: 5px;">{{ student.usn }}</div>
+        </div>
+        <a href="/logout" class="btn secondary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">Logout</a>
+    </div>
+    
+    {% if active_alert %}
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h3 style="color: #ef4444; margin: 0 0 5px 0;">Mentor Reminder</h3>
+            <span style="color: #f8fafc;">Please fill out your pending Weekly Form as requested by your faculty mentor.</span>
+        </div>
+        <div>
+            <a href="/student/weekly_checkin" class="btn secondary" style="border-color: rgba(239,68,68,0.5); color: #f87171; margin-right: 10px; text-decoration: none;">Complete Form</a>
+            <a href="/student/dismiss_alert" style="color: #94a3b8; font-size: 0.9rem; text-decoration: none;">Dismiss</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div style="text-align: left; background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 30px; border: 1px solid rgba(255,255,255,0.05);">
+        <h3 style="margin-top: 0; color: #8b5cf6;">Welcome, {{ student.name }}</h3>
+        
+        <div class="form-grid" style="margin-top: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px; margin-bottom: 20px;">
+            <div class="form-group">
+                <label>Assigned Faculty Mentor</label>
+                <div style="font-size: 1.1rem; font-weight: 500; color: #f8fafc;">{{ student.mentor_name|default("Not Assigned") }}</div>
+            </div>
+            <div class="form-group">
+                <label>Branch / Semester</label>
+                <div style="font-size: 1.1rem; color: #f8fafc;">{{ student.branch }} (Sem {{ student.semester }})</div>
+            </div>
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Overall Attendance</label>
+                <div style="font-size: 1.4rem; font-weight: 600; color: #f8fafc;">{{ student.attendance|default('0') }}%</div>
+            </div>
+            <div class="form-group">
+                <label>Current SGPA / CGPA</label>
+                <div style="font-size: 1.4rem; font-weight: 600; color: #3b82f6;">{{ student.sgpa|default('0.0') }} / {{ student.cgpa|default('0.0') }}</div>
+            </div>
+            <div class="form-group">
+                <label>Total Activity Points</label>
+                <div style="font-size: 1.4rem; font-weight: 600; color: #10b981;">{{ student.activity_points|default('0') }} / 50</div>
+            </div>
+        </div>
+
+        <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 25px; margin-top: 30px;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                <h4 style="margin: 0; color: #60a5fa; font-family: 'Outfit', sans-serif; font-size: 1.2rem;">Academic Coach Suggestions</h4>
+            </div>
+            <ul style="color: #e2e8f0; font-size: 1rem; line-height: 1.7; padding-left: 20px; margin: 0;">
+                {% if student.attendance|float < 75.0 %}
+                    <li><strong style="color: #ef4444;">Improve Attendance:</strong> You are currently at {{ student.attendance }}%. Please prioritize attending your upcoming classes to ensure you meet minimum requirements.</li>
+                {% elif student.attendance|float < 85.0 %}
+                    <li><strong style="color: #fde047;">Maintain Attendance:</strong> You are currently borderline ({{ student.attendance }}%). Keep engaging consistently in class to stay in a comfortable safety zone!</li>
+                {% else %}
+                    <li><strong style="color: #10b981;">Great Engagement:</strong> Excellent attendance record. Showing up consistently is one of the best ways to ensure academic success!</li>
+                {% endif %}
+                
+                {% if student.sgpa|float < 5.0 %}
+                    <li style="margin-top: 10px;"><strong style="color: #ef4444;">Connect with Mentors:</strong> Your grades indicate you might be facing some tough hurdles. We highly recommend using the "Need Help" button on your Weekly Check-in so we can support you.</li>
+                {% elif student.sgpa|float < 7.0 %}
+                    <li style="margin-top: 10px;"><strong style="color: #fde047;">Focus on Core Subjects:</strong> Your grades are currently average. Think about reaching out to professors or study groups to help boost those margins!</li>
+                {% else %}
+                    <li style="margin-top: 10px;"><strong style="color: #10b981;">Excellent Performance:</strong> Phenomenal academic standings ({{ student.sgpa }} SGPA). You are doing a fantastic job, keep up the amazing work!</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; display: flex; gap: 15px;">
+            <a href="/student/academic_entry" class="btn" style="flex: 1;">Self-Report Academic Marks</a>
+            <a href="/student/weekly_checkin" class="btn" style="flex: 1; background: linear-gradient(135deg, #10b981, #059669);">Log Weekly Check-in</a>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

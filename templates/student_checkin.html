@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weekly Check-in</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .range-slider {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="glass-container large" style="max-width: 600px;">
+    <h2 style="margin: 0;">Weekly Reflection</h2>
+    <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 30px;">Take a moment to check in with us. How was your week?</p>
+
+    <form method="POST" action="/student/checkin" style="text-align: left;">
+        
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label>Stress Level (1 = Completely Relaxed, 10 = Overwhelmed)</label>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="color: #8b5cf6;">1</span>
+                <input type="range" name="stress_level" min="1" max="10" value="5" class="range-slider" id="stressInput" oninput="document.getElementById('stressVal').innerText = this.value">
+                <span style="color: #ef4444;">10</span>
+            </div>
+            <div style="text-align: center; font-weight: bold; color: #f8fafc; margin-top: 10px;">Selected: <span id="stressVal">5</span> / 10</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Did you experience significant academic difficulty this week?</label>
+            <select name="academic_difficulty" required>
+                <option value="No">No, I understood the material.</option>
+                <option value="Yes">Yes, I struggled with the coursework.</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Did any personal issues affect your studies?</label>
+            <select name="personal_issues" required>
+                <option value="No">No.</option>
+                <option value="Yes">Yes.</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 30px;">
+            <label>Any additional comments for your faculty advisor? (Optional)</label>
+            <textarea name="comments" rows="4" style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; border-radius: 8px; padding: 12px; width: 100%; box-sizing: border-box; resize: vertical;"></textarea>
+        </div>
+
+        <div style="text-align: right;">
+            <a href="/student" class="btn secondary" style="margin-right: 15px;">Cancel</a>
+            <button type="submit" class="btn">Submit Reflection</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

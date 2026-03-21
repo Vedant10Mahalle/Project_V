@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Behavioral Log</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+
+<div class="glass-container large" style="max-width: 600px;">
+    <h2 style="margin: 0 0 10px 0;">Weekly Check-in Log</h2>
+    <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 30px;">Your responses are shared exclusively with your Faculty Mentor to assist in holistic tracking.</p>
+
+    <form method="POST" action="/student/weekly_checkin" style="text-align: left;">
+        
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label>Which Academic Week is this?</label>
+            <input type="number" name="week" placeholder="e.g. 5" required>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label>Current Stress Level (1 = Relaxed, 10 = Severe)</label>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span style="color: #8b5cf6; font-weight: 500;">1</span>
+                <input type="range" name="stress" min="1" max="10" value="5" style="width: 100%;" oninput="document.getElementById('stressVal').innerText = this.value">
+                <span style="color: #ef4444; font-weight: 500;">10</span>
+            </div>
+            <div style="text-align: center; color: #f8fafc; font-weight: 600; margin-top: 10px;">Score: <span id="stressVal">5</span> / 10</div>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Did you experience distinct academic issues this week?</label>
+            <select name="academic_issues" required>
+                <option value="No">No, tracking well.</option>
+                <option value="Yes">Yes, struggling with coursework.</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Rate your current understanding of the week's coursework (1-5)</label>
+            <select name="understanding_level" required>
+                <option value="5">5 - Excellent, I grasp everything.</option>
+                <option value="4">4 - Good, mostly clear.</option>
+                <option value="3" selected>3 - Average, some confusion.</option>
+                <option value="2">2 - Poor, falling behind.</option>
+                <option value="1">1 - Lost, completely unable to follow.</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>How many class sessions did you miss this week?</label>
+            <input type="number" name="missed_classes" min="0" value="0" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label>Are personal issues presently impacting your academics?</label>
+            <select name="personal_issues" required>
+                <option value="No">No.</option>
+                <option value="Yes">Yes.</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 30px;">
+            <label>Do you actively need direct intervention or help from your Mentor?</label>
+            <select name="need_help" required>
+                <option value="No">No, I am okay.</option>
+                <option value="Yes">Yes, please contact me.</option>
+            </select>
+        </div>
+
+        <div style="text-align: right;">
+            <a href="/student" class="btn secondary" style="margin-right: 15px;">Cancel</a>
+            <button type="submit" class="btn" style="background: linear-gradient(135deg, #10b981, #059669);">Submit Behavioral Log</button>
+        </div>
+    </form>
+</div>
+
+</body>
+</html>

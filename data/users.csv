@@ -1,0 +1,6 @@
+user_id,username,password,role,related_student_id
+U1,admin,admin123,teacher,
+U2,student1,pass123,student,STU001
+U3,student2,pass123,student,STU002
+U4,parent1,parent123,parent,STU001
+U5,parent2,parent123,parent,STU002

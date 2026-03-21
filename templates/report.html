@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Official Mentoring Dossier - {{ student.usn }}</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #000; background: #fff; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; border: 1px solid #ccc; padding: 40px; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+        .inst-title { font-size: 24px; font-weight: bold; text-transform: uppercase; margin: 0; }
+        .sub-header { font-size: 14px; color: #555; }
+        .section { margin-bottom: 30px; }
+        .section-title { background: #f0f0f0; padding: 8px; font-weight: bold; font-size: 16px; border-left: 4px solid #333; margin-top: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background: #fafafa; font-size: 14px; }
+        .risk-high { color: red; font-weight: bold; }
+        .risk-med { color: orange; font-weight: bold; }
+        .risk-low { color: green; font-weight: bold; }
+        @media print {
+            body { padding: 0; }
+            .container { border: none; padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="no-print" style="text-align: right; margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #000; color: #fff; border: none; cursor: pointer;">Print / Save as PDF</button>
+        <button onclick="window.close()" style="padding: 10px 20px; border: 1px solid #000; cursor: pointer; margin-left: 10px;">Close Document</button>
+    </div>
+
+    <div class="header">
+        <h1 class="inst-title">Student Risk Prediction System</h1>
+        <div class="sub-header">Official Student Mentoring Report</div>
+        <div style="margin-top: 15px; font-size: 14px;"><strong>Date Generated:</strong> <script>document.write(new Date().toLocaleDateString());</script></div>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">1. Student Demographics</h2>
+        <table>
+            <tr><th>Full Name</th><td>{{ student.name }}</td><th>USN Reference</th><td>{{ student.usn }}</td></tr>
+            <tr><th>Branch / Major</th><td>{{ student.branch }}</td><th>Primary Mentor</th><td>{{ student.mentor_name }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">2. Global Academic Evaluation</h2>
+        <table>
+            <tr>
+                <th>Total Attendance</th><td>{{ student.attendance|default('N/A') }}%</td>
+                <th>SGPA / CGPA</th><td>{{ student.sgpa|default('0.0') }} / {{ student.cgpa|default('0.0') }}</td>
+            </tr>
+            <tr>
+                <th>Activity Points Accrued</th><td colspan="3">{{ student.activity_points|default('0') }} out of 50</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">3. Transcript Histories</h2>
+        {% for sem_idx, sub_list in student.marks.items() %}
+        <h4 style="margin: 15px 0 5px 0;">Semester {{ sem_idx }}</h4>
+        <table>
+            <tr><th>Subject Title</th><th>CIE Record</th><th>SEE Record</th></tr>
+            {% for sub in sub_list %}
+            <tr><td>{{ sub.subject }}</td><td>{{ sub.cie }} / 50</td><td>{{ sub.see }} / 100</td></tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No formal transcripts recorded in system.</p>
+        {% endfor %}
+    </div>
+
+    <div class="section">
+        <h2 class="section-title">4. Institutional System Risk Scoring</h2>
+        <p>Computed via logic-fusion of academics, marks, and student behavioral weekly logs.</p>
+        <table>
+            <tr>
+                <th>Assessed Risk Score (Out of 100)</th>
+                <td><strong>{{ risk.score }}</strong></td>
+                <th>Intervention Status Categorization</th>
+                <td class="{% if risk.level == 'High' %}risk-high{% elif risk.level == 'Medium' %}risk-med{% else %}risk-low{% endif %}">Tier: {{ risk.level }}</td>
+            </tr>
+        </table>
+    </div>
+    
+    <div style="margin-top: 60px; display: flex; justify-content: space-between;">
+        <div style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 10px;">Mentor Signature</div>
+        <div style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 10px;">HOD Verification</div>
+    </div>
+
+</div>
+
+</body>
+</html>

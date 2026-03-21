@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        th { background: rgba(255,255,255,0.05); color: #94a3b8; font-weight: 500; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+        .text-danger { color: #ef4444; }
+        .text-success { color: #34d399; }
+    </style>
+</head>
+<body>
+
+<div class="glass-container large" style="max-width: 1200px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0;">Faculty Dashboard - {{ name }}</h2>
+        <div>
+            <form action="/teacher/notify_students" method="POST" style="display:inline;">
+                <button type="submit" class="btn secondary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem; margin-right: 10px;">Notify All Students</button>
+            </form>
+            <a href="/logout" class="btn secondary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">Logout</a>
+        </div>
+    </div>
+    
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;">
+            ✓ System: {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <p style="text-align: left; color: #94a3b8; margin-bottom: 30px;">Overview of students officially assigned to your mentoring batch. Expand a row for the detailed Profile View (Phase 2 feature).</p>
+
+    {% if meetings and meetings|length > 0 %}
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+        <h3 style="color: #ef4444; margin: 0 0 10px 0;">Urgent Parent Meeting Requests</h3>
+        <ul style="color: #f8fafc; margin: 0; padding-left: 20px; font-size: 0.95rem;">
+            {% for m in meetings %}
+            <li style="margin-bottom: 10px;">Parent of <strong>{{ m.student_name }}</strong> ({{ m.usn }}) formally requested an urgent meeting to discuss metrics status.
+                <a href="/teacher/resolve_meeting/{{ m.usn }}" class="btn secondary" style="padding: 4px 10px; font-size: 0.8rem; margin-left: 15px; border-color: rgba(239, 68, 68, 0.5); color: #f87171;">Mark as Scheduled / Resolve</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div style="overflow-x: auto;">
+        <table>
+            <thead>
+                <tr>
+                    <th>USN</th>
+                    <th>Student Name</th>
+                    <th>Year</th>
+                    <th>Sem</th>
+                    <th>Attendance</th>
+                    <th>SGPA</th>
+                    <th>Acad Risk</th>
+                    <th>Behav Risk</th>
+                    <th>ML Drop Prob</th>
+                    <th>Final Risk</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td style="color: #64748b; font-family: monospace;">{{ s.usn }}</td>
+                    <td style="font-weight: 500; color: #f8fafc;">{{ s.name }}</td>
+                    <td><span style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ s.year }}</span></td>
+                    <td>{{ s.semester_x|default('1') }}</td>
+                    <td>{{ s.attendance }}%</td>
+                    <td style="font-weight: 600;">{{ s.sgpa }}</td>
+                    <td>
+                        <span class="badge {% if s.acad_risk == 'High' %}danger{% elif s.acad_risk == 'Medium' %}warning{% else %}success{% endif %}">{{ s.acad_risk }}</span>
+                    </td>
+                    <td>
+                        <span class="badge {% if s.behav_risk == 'High' %}danger{% elif s.behav_risk == 'Medium' %}warning{% else %}success{% endif %}">{{ s.behav_risk }}</span>
+                    </td>
+                    <td>
+                        <strong class="{% if s.dropout_prob > 60 %}text-danger{% else %}text-success{% endif %}">{{ s.dropout_prob }}%</strong>
+                    </td>
+                    <td>
+                        <span class="badge {% if s.final_risk == 'High' %}danger{% elif s.final_risk == 'Medium' %}warning{% else %}success{% endif %}" style="border: 1px solid rgba(255,255,255,0.2);">{{ s.final_risk }}</span>
+                    </td>
+                    <td>
+                        <a href="/teacher/student/{{ s.usn }}" class="btn secondary" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">View Profile</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 30px; color: #94a3b8;">
+                        No students have selected you as their mentor yet. Once they complete the Mentor Linking selection on login, they will appear here.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

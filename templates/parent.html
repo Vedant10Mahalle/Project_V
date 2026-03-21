@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parent Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .text-danger { color: #ef4444; }
+        .text-primary { color: #3b82f6; }
+    </style>
+</head>
+<body>
+
+<div class="glass-container large" style="max-width: 900px; padding: 40px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 20px;">
+        <div>
+            <span style="color: #94a3b8; font-weight: 500; letter-spacing: 1px; font-size: 0.9rem; text-transform: uppercase;">Parent Dashboard</span>
+            <h2 style="margin: 5px 0 0 0; font-size: 2rem;">Academics overview for {{ student.name }}</h2>
+            <div style="color: #3b82f6; font-family: monospace; font-size: 1.1rem; margin-top: 5px;">Linked USN: {{ student.usn }}</div>
+        </div>
+        <div>
+            <a href="/logout" class="btn secondary" style="margin-bottom: 10px;">Sign Out</a>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-weight: 500;">
+            ✓ System: {{ messages[0] }}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% if risk.level == 'High' %}
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+        <h3 style="color: #ef4444; margin: 0 0 10px 0;">Attention Requested (High Priority)</h3>
+        <p style="color: #f8fafc; margin: 0 0 10px 0; line-height: 1.5;">The system flag indicates significant behavioral or academic distress. The primary factors triggering this alert are:</p>
+        <ul style="color: #fca5a5; font-size: 0.95rem; margin: 0; padding-left: 20px;">
+            {% for reason in risk.reasons %}
+                {% if "Consistent" not in reason %}<li>{{ reason }}</li>{% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% elif risk.level == 'Medium' %}
+    <div style="background: rgba(253, 224, 71, 0.1); border: 1px solid rgba(253, 224, 71, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+        <h3 style="color: #fde047; margin: 0 0 10px 0;">System Notice (Active Observation)</h3>
+        <p style="color: #f8fafc; margin: 0 0 10px 0; line-height: 1.5;">{{ student.name }} is currently being monitored by our system logic due to the following recent triggers:</p>
+        <ul style="color: #fef08a; font-size: 0.95rem; margin: 0; padding-left: 20px;">
+            {% for reason in risk.reasons %}
+                {% if "Consistent" not in reason %}<li>{{ reason }}</li>{% endif %}
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
+        <h3 style="color: #10b981; margin: 0 0 10px 0;">On Track</h3>
+        <p style="color: #f8fafc; margin: 0; line-height: 1.5;">{{ student.name }} is currently tracked as having a healthy standing with no significant stressors reported.</p>
+    </div>
+    {% endif %}
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+        
+        <div style="background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-family: 'Outfit', sans-serif;">Latest General Metrics</h3>
+            
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">Total Attendance</span>
+                <div style="font-size: 1.8rem; font-weight: 600; color: #f8fafc;">{{ student.attendance|default('0') }}%</div>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">Current Aggregate Grades</span>
+                <div style="font-size: 1.8rem; font-weight: 600; color: #3b82f6;">{{ student.sgpa|default('0.0') }} <span style="font-size: 1rem; color: #64748b;">(SGPA)</span> / {{ student.cgpa|default('0.0') }} <span style="font-size: 1rem; color: #64748b;">(CGPA)</span></div>
+            </div>
+
+            <div style="margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">Activity Points Accrued</span>
+                <div style="font-size: 1.8rem; font-weight: 600; color: #10b981;">{{ student.activity_points|default('0') }} <span style="font-size: 1.2rem; color: #94a3b8;">/ 50</span></div>
+            </div>
+
+            <div>
+                <span style="color: #94a3b8; font-size: 0.9rem; display: block;">System Risk Prediction</span>
+                <div style="font-size: 1.8rem; font-weight: 600;" class="{% if risk.dropout_prob > 60 %}text-danger{% else %}text-primary{% endif %}">{{ risk.dropout_prob }}% <span style="font-size: 1.2rem; color: #94a3b8;">(ML Dropout Risk)</span></div>
+            </div>
+        </div>
+
+        <div style="background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.05);">
+            <h3 style="margin: 0 0 20px 0; color: #f8fafc; font-family: 'Outfit', sans-serif;">Faculty Mentor Contact</h3>
+            <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 20px;">If you wish to discuss these metrics or any behavioral alerts, please contact the officially assigned faculty mentor managing this batch.</p>
+            
+            <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); padding: 15px; border-radius: 12px; display: inline-block; min-width: 60%;">
+                <span style="color: #94a3b8; font-size: 0.85rem; display: block; text-transform: uppercase; letter-spacing: 1px;">Assigned Mentor</span>
+                <div style="font-size: 1.4rem; font-family: 'Outfit', sans-serif; font-weight: 600; color: #f8fafc; margin-top: 5px;">{{ student.mentor_name|default('Pending Assignment') }}</div>
+            </div>
+            
+            <form action="/parent/request_meeting" method="POST">
+                <button type="submit" class="btn" style="margin-top: 25px; width: 100%; text-align: center; padding: 12px;">Request Formal Meeting</button>
+            </form>
+        </div>
+
+    </div>
+
+    <!-- Detailed Semester Records (New) -->
+    <div style="background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 25px; border: 1px solid rgba(255,255,255,0.05); margin-top: 25px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #f8fafc; font-family: 'Outfit', sans-serif;">Detailed Academic Transcripts</h3>
+            <select id="parentSemSelect" onchange="showParentSem(this.value)" style="background: rgba(15, 23, 42, 0.8); color: #f8fafc; border: 1px solid rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 6px; font-family: 'Inter', sans-serif; cursor: pointer; outline: none;">
+                {% for s in range(1, 9) %}
+                    <option value="psem{{ s }}" {% if s == 1 %}selected{% endif %}>Semester {{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        {% for s in range(1, 9) %}
+        <div id="psem{{ s }}" class="parent-sem-container" {% if s == 1 %}style="display: block;"{% else %}style="display: none;"{% endif %}>
+        {% set sem_str = s|string %}
+        {% if sem_str in student.marks %}
+            {% set sub_list = student.marks[sem_str] %}
+            <div style="margin-top: 25px; border-top: 1px dotted rgba(255,255,255,0.1); padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+                    <h4 style="color: #e2e8f0; margin: 0;">Semester {{ sem_str }}</h4>
+                    {% set summ = student.sem_summaries.get(sem_str, {}) %}
+                    {% if summ %}
+                    <div style="font-size: 0.85rem; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px;">
+                        <span style="margin-right: 12px;">SGPA: <strong style="color:#f8fafc;">{{ summ.sgpa }}</strong></span>
+                        <span style="margin-right: 12px;">CGPA: <strong style="color:#f8fafc;">{{ summ.cgpa }}</strong></span>
+                        <span>Att: <strong style="color:#f8fafc;">{{ summ.attendance }}%</strong></span>
+                    </div>
+                    {% endif %}
+                </div>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr>
+                        <th style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">Subject Title</th>
+                        <th style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">CIE Marks</th>
+                        <th style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; color: #94a3b8; font-weight: 500; font-size: 0.9rem;">SEE Marks</th>
+                    </tr>
+                    {% for sub in sub_list %}
+                    <tr>
+                        <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">{{ sub.subject }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">{{ sub.cie }}</td>
+                        <td style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">{{ sub.see }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            <div style="margin-top: 25px; border-top: 1px dotted rgba(255,255,255,0.1); padding-top: 15px; opacity: 0.4;">
+                <h4 style="color: #94a3b8; margin: 0;">Semester {{ s }}</h4>
+                <p style="color: #64748b; font-size: 0.9rem; margin-top: 10px;">Academic transcript not yet populated by student.</p>
+            </div>
+        {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<script>
+function showParentSem(semId) {
+    document.querySelectorAll('.parent-sem-container').forEach(el => el.style.display = 'none');
+    document.getElementById(semId).style.display = 'block';
+}
+</script>
+
+</body>
+</html>
