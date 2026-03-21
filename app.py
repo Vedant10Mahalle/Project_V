@@ -57,7 +57,7 @@ def load_teacher_dashboard_data(teacher_id):
 def load_student_profile(usn):
     students_df = get_df("data/students.csv")
     if students_df.empty: return {}
-    me = students_df[students_df['usn'] == usn]
+    me = students_df[students_df['usn'].astype(str) == str(usn)]
     if me.empty: return {}
     record = me.iloc[0].to_dict()
     
@@ -79,7 +79,7 @@ def load_student_profile(usn):
     record['activity_points'] = 0
 
     if not summ_df.empty and 'usn' in summ_df.columns:
-        my_summs = summ_df[summ_df['usn'] == usn]
+        my_summs = summ_df[summ_df['usn'].astype(str) == str(usn)]
         record['semesters'] = my_summs.to_dict(orient='records')
         
         for s in record['semesters']:
@@ -102,7 +102,7 @@ def load_student_profile(usn):
     marks_df = get_df("data/academic_marks.csv")
     record['marks'] = {} # { semester_number: [ {subject: x, cie: y, see: z} ] }
     if not marks_df.empty and 'usn' in marks_df.columns:
-        my_marks = marks_df[marks_df['usn'] == usn]
+        my_marks = marks_df[marks_df['usn'].astype(str) == str(usn)]
         for _, row in my_marks.iterrows():
             sem = str(int(row['semester'])) if pd.notna(row['semester']) else '0'
             if sem not in record['marks']: record['marks'][sem] = []
@@ -245,7 +245,7 @@ def login():
 
         elif role == "student":
             df = get_df("data/students.csv")
-            matching = df[df["usn"] == username]
+            matching = df[df["usn"].astype(str) == str(username)]
             if not matching.empty and _verify(matching.iloc[0]["password"], password):
                 session["user_id"] = matching.iloc[0]["usn"]
                 session["name"] = matching.iloc[0]["name"]
@@ -328,9 +328,12 @@ def select_mentor():
         chosen_mentor = request.form.get("mentor_id")
         usn = session.get("user_id")
         df = get_df("data/students.csv")
-        idx = df[df['usn'] == usn].index[0]
-        df.loc[idx, 'mentor_id'] = chosen_mentor
-        save_df(df, "data/students.csv")
+        try:
+            idx = df[df['usn'].astype(str) == str(usn)].index[0]
+            df.loc[idx, 'mentor_id'] = chosen_mentor
+            save_df(df, "data/students.csv")
+        except IndexError:
+            pass # Failsafe if not found
         session["needs_mentor"] = False
         session["mentor_id"] = chosen_mentor
         return redirect(url_for("home"))
@@ -417,12 +420,16 @@ def student():
     if session.get("needs_mentor"): return redirect(url_for("select_mentor"))
     
     profile = load_student_profile(session.get("user_id"))
+    if not profile:
+        session.clear()
+        flash("Error loading profile. Please log in again.", "error")
+        return redirect(url_for("login"))
     
     # Check notifications
     df = get_df("data/notifications.csv")
     active_alert = False
     if not df.empty and profile.get("mentor_id"):
-        notifs = df[df['teacher_id'] == profile["mentor_id"]]
+        notifs = df[df['teacher_id'].astype(str) == str(profile["mentor_id"])]
         if not notifs.empty and str(notifs.iloc[0]["active"]) == "True":
             active_alert = True
             
