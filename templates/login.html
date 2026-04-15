@@ -2,102 +2,97 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Risk Prediction System Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project V — Log In</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        .role-selector {
-            display: flex; gap: 8px; margin-bottom: 25px; flex-wrap: wrap;
+        .login-wrapper {
+            max-width: 420px;
+            margin: 100px auto;
+            text-align: center;
         }
-        .role-btn {
-            flex: 1; min-width: 70px; padding: 11px 8px; text-align: center; background: rgba(15, 23, 42, 0.4); 
-            border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; cursor: pointer;
-            color: #94a3b8; font-weight: 500; transition: all 0.3s ease; font-size: 0.88rem;
+        .hero-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
         }
-        .role-btn.active {
-            background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #60a5fa;
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
         }
-        .role-btn.admin-btn.active {
-            background: rgba(99, 102, 241, 0.15); border-color: #6366f1; color: #a5b4fc;
-        }
-        input[type="radio"] { display: none; }
+        .role-tabs input { display: none; }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 24px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-light); }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
     </style>
 </head>
-<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+<body>
 
-<div class="glass-container" style="max-width: 400px; padding: 40px; margin: 20px;">
-    
-    <div style="text-align: center; margin-bottom: 30px;">
-        <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2)); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px;">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="url(#blue-purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-                <defs><linearGradient id="blue-purple" x1="0" y1="0" x2="24" y2="24"><stop offset="0%" stop-color="#3b82f6" /><stop offset="100%" stop-color="#8b5cf6" /></linearGradient></defs>
-            </svg>
-        </div>
-        <h1 style="font-size: 1.8rem; margin: 0 0 10px 0;">Student Risk Prediction System</h1>
-        <p style="color: #94a3b8; margin: 0; font-size: 0.95rem;">Please select your role and sign in.</p>
-    </div>
+<div class="glass-container login-wrapper">
+    <h1 class="hero-title">Project V</h1>
+    <p class="hero-subtitle">Intelligent Student Support System</p>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-        <div style="background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #f87171; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; text-align: center;">
-            {{ messages[0] }}
-        </div>
+        <div class="flash error">{{ messages[0] }}</div>
       {% endif %}
     {% endwith %}
 
     <form method="POST" action="/login">
-        <!-- Role Selection -->
-        <div class="role-selector" id="roleContainer">
-            <label class="role-btn active" id="btn-student">
-                <input type="radio" name="role" value="student" checked onchange="updateRole('student')"> Student
-            </label>
-            <label class="role-btn" id="btn-teacher">
-                <input type="radio" name="role" value="teacher" onchange="updateRole('teacher')"> Teacher
-            </label>
-            <label class="role-btn" id="btn-parent">
-                <input type="radio" name="role" value="parent" onchange="updateRole('parent')"> Parent
-            </label>
-            <label class="role-btn admin-btn" id="btn-admin">
-                <input type="radio" name="role" value="admin" onchange="updateRole('admin')"> ⚙ Admin
-            </label>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 20px;">
-            <label id="username-label">USN / ID</label>
-            <input type="text" name="username" placeholder="Enter your ID" required>
-        </div>
-
-        <div class="form-group" style="margin-bottom: 30px;">
-            <label>Password</label>
-            <input type="password" name="password" placeholder="••••••••" required>
-        </div>
-
-        <button type="submit" class="btn" style="width: 100%; padding: 14px; font-size: 1rem; margin-bottom: 15px;">Sign In securely</button>
         
-        <div style="text-align: center; margin-bottom: 20px;">
-            <a href="/forgot_password" style="color: #60a5fa; text-decoration: none; font-size: 0.9rem;">Forgot your password? Reset it here.</a>
+        <div class="role-tabs">
+            <input type="radio" name="role" id="r_student" value="student" {% if not preselect_admin %}checked{% endif %}>
+            <label for="r_student">Student</label>
+
+            <input type="radio" name="role" id="r_teacher" value="teacher">
+            <label for="r_teacher">Mentor</label>
+
+            <input type="radio" name="role" id="r_parent" value="parent">
+            <label for="r_parent">Parent</label>
+            
+            <input type="radio" name="role" id="r_admin" value="admin" {% if preselect_admin %}checked{% endif %}>
+            <label for="r_admin">Admin</label>
         </div>
 
-        <div style="text-align: center; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-top: 10px;">
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">Are you a new student?</p>
-            <a href="/register" class="btn secondary" style="width: 100%; display: block; box-sizing: border-box;">Register Student Profile</a>
+        <div class="form-group">
+            <label id="usn-label">ID Number</label>
+            <input type="text" name="username" id="username-input" placeholder="Enter your ID" required>
         </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; margin-top: 8px;">Sign In</button>
     </form>
+
+    <div class="divider">or</div>
+
+    <div style="display: flex; gap: 12px;">
+        <a href="/register" class="btn secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;">Register</a>
+        <a href="/forgot_password" class="btn secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;">Forgot Password</a>
+    </div>
+
 </div>
 
 <script>
-    function updateRole(role) {
-        ['student','teacher','parent','admin'].forEach(r =>
-            document.getElementById('btn-' + r).classList.remove('active'));
-        document.getElementById('btn-' + role).classList.add('active');
-        
-        let label = document.getElementById('username-label');
-        if (role === 'student') label.innerText = 'University ID (USN)';
-        else if (role === 'teacher') label.innerText = 'Faculty ID';
-        else if (role === 'admin') label.innerText = 'Admin Username';
-        else label.innerText = 'Parent Access ID';
-    }
+    const labels = {
+        r_student: 'Student USN',
+        r_teacher: 'Mentor ID',
+        r_parent: 'Parent ID',
+        r_admin: 'Admin ID'
+    };
+    document.querySelectorAll('.role-tabs input').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('usn-label').textContent = labels[radio.id] || 'ID Number';
+        });
+    });
+    const checked = document.querySelector('.role-tabs input:checked');
+    if (checked) document.getElementById('usn-label').textContent = labels[checked.id] || 'ID Number';
 </script>
 
 </body>

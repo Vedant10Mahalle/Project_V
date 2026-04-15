@@ -2,106 +2,110 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Teacher Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project V — Mentor Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 20px; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        th { background: rgba(255,255,255,0.05); color: #94a3b8; font-weight: 500; }
-        tr:hover { background: rgba(255,255,255,0.02); }
-        .text-danger { color: #ef4444; }
-        .text-success { color: #34d399; }
+        .dashboard-layout { display: grid; grid-template-columns: 320px 1fr; gap: 40px; padding: 40px; max-width: 1200px; margin: 0 auto; align-items: start; }
+        .sidebar { position: sticky; top: 40px; }
+        @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } .sidebar { position: relative; top: 0; } }
+        
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+        .list-header h3 { margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 500; }
+        
+        .empty-state { padding: 40px; text-align: center; color: var(--text-secondary); background: #ffffff; border-radius: var(--radius-md); border: 1px dashed var(--border-light); }
     </style>
 </head>
 <body>
 
-<div class="glass-container large" style="max-width: 1200px;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">Faculty Dashboard - {{ name }}</h2>
-        <div>
-            <form action="/teacher/notify_students" method="POST" style="display:inline;">
-                <button type="submit" class="btn secondary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem; margin-right: 10px;">Notify All Students</button>
-            </form>
-            <a href="/logout" class="btn secondary" style="margin: 0; padding: 8px 16px; font-size: 0.9rem;">Logout</a>
+<div style="width: 100%; border-bottom: 1px solid var(--border-light); background: #ffffff;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 600;">Project V</h1>
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <span style="color: var(--text-secondary); font-size: 0.95rem;">Hello, {{ name }}</span>
+            <a href="/logout" class="btn secondary" style="padding: 8px 16px; font-size: 0.85rem;">Sign out</a>
         </div>
     </div>
+</div>
+
+<div class="dashboard-layout">
     
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 500;">
-            ✓ System: {{ messages[0] }}
+    <div class="sidebar">
+        <!-- Mentor Context -->
+        <div style="background: #ffffff; padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 24px;">
+            <h2 style="margin: 0 0 8px 0; font-size: 1.1rem; font-weight: 500;">Mentor Tools</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin: 0 0 20px 0;">Send a subtle reminder to students who might have forgotten their daily check-in.</p>
+            
+            <form action="/teacher/notify_students" method="POST">
+                <button type="submit" class="btn secondary" style="width: 100%; text-align: left;">
+                    <span style="margin-right: 8px;">🔔</span> Notify My Students
+                </button>
+            </form>
         </div>
-      {% endif %}
-    {% endwith %}
 
-    <p style="text-align: left; color: #94a3b8; margin-bottom: 30px;">Overview of students officially assigned to your mentoring batch. Expand a row for the detailed Profile View (Phase 2 feature).</p>
-
-    {% if meetings and meetings|length > 0 %}
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); padding: 20px; border-radius: 12px; margin-bottom: 30px;">
-        <h3 style="color: #ef4444; margin: 0 0 10px 0;">Urgent Parent Meeting Requests</h3>
-        <ul style="color: #f8fafc; margin: 0; padding-left: 20px; font-size: 0.95rem;">
-            {% for m in meetings %}
-            <li style="margin-bottom: 10px;">Parent of <strong>{{ m.student_name }}</strong> ({{ m.usn }}) formally requested an urgent meeting to discuss metrics status.
-                <a href="/teacher/resolve_meeting/{{ m.usn }}" class="btn secondary" style="padding: 4px 10px; font-size: 0.8rem; margin-left: 15px; border-color: rgba(239, 68, 68, 0.5); color: #f87171;">Mark as Scheduled / Resolve</a>
-            </li>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash {% if category == 'error' %}error{% else %}success{% endif %}">
+                {{ message }}
+            </div>
             {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
+          {% endif %}
+        {% endwith %}
 
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>USN</th>
-                    <th>Student Name</th>
-                    <th>Year</th>
-                    <th>Sem</th>
-                    <th>Attendance</th>
-                    <th>SGPA</th>
-                    <th>Acad Risk</th>
-                    <th>Behav Risk</th>
-                    <th>ML Drop Prob</th>
-                    <th>Final Risk</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in students %}
-                <tr>
-                    <td style="color: #64748b; font-family: monospace;">{{ s.usn }}</td>
-                    <td style="font-weight: 500; color: #f8fafc;">{{ s.name }}</td>
-                    <td><span style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;">{{ s.year }}</span></td>
-                    <td>{{ s.semester_x|default('1') }}</td>
-                    <td>{{ s.attendance }}%</td>
-                    <td style="font-weight: 600;">{{ s.sgpa }}</td>
-                    <td>
-                        <span class="badge {% if s.acad_risk == 'High' %}danger{% elif s.acad_risk == 'Medium' %}warning{% else %}success{% endif %}">{{ s.acad_risk }}</span>
-                    </td>
-                    <td>
-                        <span class="badge {% if s.behav_risk == 'High' %}danger{% elif s.behav_risk == 'Medium' %}warning{% else %}success{% endif %}">{{ s.behav_risk }}</span>
-                    </td>
-                    <td>
-                        <strong class="{% if s.dropout_prob > 60 %}text-danger{% else %}text-success{% endif %}">{{ s.dropout_prob }}%</strong>
-                    </td>
-                    <td>
-                        <span class="badge {% if s.final_risk == 'High' %}danger{% elif s.final_risk == 'Medium' %}warning{% else %}success{% endif %}" style="border: 1px solid rgba(255,255,255,0.2);">{{ s.final_risk }}</span>
-                    </td>
-                    <td>
-                        <a href="/teacher/student/{{ s.usn }}" class="btn secondary" style="margin: 0; padding: 4px 10px; font-size: 0.8rem;">View Profile</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 30px; color: #94a3b8;">
-                        No students have selected you as their mentor yet. Once they complete the Mentor Linking selection on login, they will appear here.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Smart Alerts -->
+        {% if alerts and alerts|length > 0 %}
+            <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--text-secondary);">Recent Insights</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for alert in alerts %}
+                <div style="padding: 16px; background: #ffffff; border-radius: var(--radius-sm); border-left: 3px solid {% if alert.type == 'danger' %}var(--color-danger){% else %}var(--color-warning){% endif %}; box-shadow: var(--shadow-soft);">
+                    <div style="font-size: 0.9rem; color: var(--text-primary);">{{ alert.message }}</div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
     </div>
+
+    <!-- Student List -->
+    <div class="main-content">
+        
+        <div class="list-header">
+            <h3>Assigned Students ({{ students|length }})</h3>
+        </div>
+
+        {% if students|length == 0 %}
+        <div class="empty-state">
+            <span style="font-size: 2rem; display: block; margin-bottom: 12px;">🌱</span>
+            No students assigned to you yet.
+        </div>
+        {% else %}
+        
+        <div class="student-list" style="margin-top: 0;">
+            {% for s in students %}
+            <a href="/teacher/student/{{ s.usn }}" class="student-row">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span class="status-dot {% if s.risk_level == 'High' %}danger{% elif s.risk_level == 'Medium' %}warning{% else %}success{% endif %}"></span>
+                    <div class="student-info">
+                        <h4>{{ s.name }}</h4>
+                        <p>{{ s.usn }}</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: right; margin-right: 16px; flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 16px;">
+                    <div style="display: flex; flex-direction: column; text-align: right;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Dropout Probability</span>
+                        <strong class="{% if s.dropout_prob > 60 %}text-danger{% elif s.dropout_prob > 35 %}text-warning{% else %}text-success{% endif %}" style="font-size: 1.1rem; font-family: monospace;">{{ s.dropout_prob }}%</strong>
+                    </div>
+                </div>
+                
+                <span style="color: var(--text-muted);">→</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+
 </div>
 
 </body>

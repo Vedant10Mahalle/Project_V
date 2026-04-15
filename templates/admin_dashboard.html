@@ -279,7 +279,7 @@
                             <span style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">System Fallback Logic</span>
                         {% endif %}
                     </div>
-                    <p style="margin: 0 0 20px 0; color: #94a3b8; font-size: 0.95rem; max-width: 800px; line-height: 1.5;">The system is actively utilizing a <strong>{{ ml_status.algorithm }}</strong> to dynamically analyze real-time student datasets and compute highly accurate dropout intervention probabilities.</p>
+                    <p style="margin: 0 0 20px 0; color: var(--text-secondary); font-size: 0.95rem; max-width: 800px; line-height: 1.5;">The system is actively using the <strong>{{ ml_status.algorithm }}</strong> via the `scikit-learn` pipeline to evaluate multi-factor check-in data and generate realtime Dropout Probabilities with SHAP inference.</p>
                     
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 8px;">
@@ -423,7 +423,7 @@
                         </td>
                         <td>
                             <span class="role-badge {% if s.risk_level == 'High' %}danger{% elif s.risk_level == 'Medium' %}warning{% else %}success{% endif %}">
-                                {{ s.risk_level }} ({{ s.dropout_prob }}%)
+                                {{ s.risk_level }} (Dropout Prob: {{ s.dropout_prob }}%)
                             </span>
                         </td>
                         <td style="display:flex;gap:8px;align-items:center">

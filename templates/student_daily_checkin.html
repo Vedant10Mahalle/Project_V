@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Check-in — Project V</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .checkin-container { max-width: 480px; margin: 40px auto; }
+        .section-title { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 12px; font-weight: 500; }
+        .form-section { margin-bottom: 32px; }
+        
+        .win-input {
+            width: 100%; border: none; border-bottom: 2px solid var(--border-light);
+            background: transparent; padding: 12px 0; font-size: 1rem; color: var(--text-primary); outline: none; transition: 0.2s;
+        }
+        .win-input:focus { border-bottom-color: var(--color-brand); }
+    </style>
+</head>
+<body>
+
+<div class="glass-container checkin-container">
+    <a href="/student" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px; display: inline-block;">← Back to Dashboard</a>
+    
+    <div style="margin-bottom: 32px;">
+        <h2 style="margin: 0 0 8px 0; font-size: 1.8rem;">Daily Check-in</h2>
+        <p style="margin: 0; color: var(--text-secondary);">Takes less than 20 seconds.</p>
+    </div>
+
+    <form method="POST" action="/student/daily_checkin">
+        
+        <div class="form-section">
+            <div class="section-title">How are you feeling today?</div>
+            <div class="mood-grid">
+                <input type="radio" name="mood" value="3" id="mood-good" style="display:none;" required>
+                <label class="mood-btn" for="mood-good">
+                    <span class="mood-emoji">😄</span>
+                    <span class="mood-label">Good</span>
+                </label>
+
+                <input type="radio" name="mood" value="2" id="mood-okay" style="display:none;">
+                <label class="mood-btn" for="mood-okay">
+                    <span class="mood-emoji">😐</span>
+                    <span class="mood-label">Okay</span>
+                </label>
+
+                <input type="radio" name="mood" value="1" id="mood-bad" style="display:none;">
+                <label class="mood-btn" for="mood-bad">
+                    <span class="mood-emoji">😞</span>
+                    <span class="mood-label">Rough</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Energy Level ⚡</div>
+            <div class="slider-track">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Low</span>
+                <input type="range" name="energy" min="1" max="5" value="3" required>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">High</span>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Current Stress Level 🧘</div>
+            <div class="slider-track">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Calm</span>
+                <input type="range" name="stress" min="1" max="5" value="2" required>
+                <span style="font-size: 0.85rem; color: var(--text-muted);">High</span>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Did you attend all classes today?</div>
+            <div class="toggle-group">
+                <input type="radio" name="attendance" value="yes" id="att-yes" style="display:none;" checked>
+                <label class="toggle-btn" for="att-yes">Yes, all of them</label>
+                
+                <input type="radio" name="attendance" value="no" id="att-no" style="display:none;">
+                <label class="toggle-btn" for="att-no">Missed some</label>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">Biggest struggle today?</div>
+            <select name="difficulty" style="background: var(--bg-card);">
+                <option value="none">None, smooth sailing</option>
+                <option value="academic">Academic / Understanding</option>
+                <option value="time">Time Management</option>
+                <option value="personal">Personal / Wellbeing</option>
+                <option value="focus">Focus / Distractions</option>
+            </select>
+        </div>
+
+        <div class="form-section">
+            <div class="section-title">One win today? 🌟</div>
+            <input type="text" name="daily_win" class="win-input" placeholder="e.g. Finished my assignment early" required>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 1.05rem;">Submit Check-in ✓</button>
+
+    </form>
+</div>
+
+</body>
+</html>

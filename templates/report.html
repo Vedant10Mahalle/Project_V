@@ -2,97 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Official Mentoring Dossier - {{ student.usn }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Report — {{ student.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #000; background: #fff; line-height: 1.6; }
-        .container { max-width: 800px; margin: auto; border: 1px solid #ccc; padding: 40px; }
-        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-        .inst-title { font-size: 24px; font-weight: bold; text-transform: uppercase; margin: 0; }
-        .sub-header { font-size: 14px; color: #555; }
-        .section { margin-bottom: 30px; }
-        .section-title { background: #f0f0f0; padding: 8px; font-weight: bold; font-size: 16px; border-left: 4px solid #333; margin-top: 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background: #fafafa; font-size: 14px; }
-        .risk-high { color: red; font-weight: bold; }
-        .risk-med { color: orange; font-weight: bold; }
-        .risk-low { color: green; font-weight: bold; }
         @media print {
-            body { padding: 0; }
-            .container { border: none; padding: 0; }
+            body { background: white !important; color: #1e293b !important; }
+            .glass-container { box-shadow: none; border: 1px solid #e2e8f0; }
             .no-print { display: none; }
         }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div class="no-print" style="text-align: right; margin-bottom: 20px;">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #000; color: #fff; border: none; cursor: pointer;">Print / Save as PDF</button>
-        <button onclick="window.close()" style="padding: 10px 20px; border: 1px solid #000; cursor: pointer; margin-left: 10px;">Close Document</button>
+<div class="glass-container large" style="max-width: 860px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--border-subtle);">
+        <div>
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Formal Student Dossier</div>
+            <h2 style="margin:4px 0 0; font-size:1.6rem;">{{ student.name }}</h2>
+            <div style="color:var(--text-secondary); font-family:monospace;">{{ student.usn }} · {{ student.branch }}</div>
+        </div>
+        <div class="no-print" style="display:flex; gap:10px;">
+            <button onclick="window.print()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem;">🖨️ Print</button>
+            <a href="javascript:history.back()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem; text-decoration:none;">← Back</a>
+        </div>
     </div>
 
-    <div class="header">
-        <h1 class="inst-title">Student Risk Prediction System</h1>
-        <div class="sub-header">Official Student Mentoring Report</div>
-        <div style="margin-top: 15px; font-size: 14px;"><strong>Date Generated:</strong> <script>document.write(new Date().toLocaleDateString());</script></div>
+    <!-- Risk Summary -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;">
+        <div class="stat-card">
+            <div class="stat-value {% if risk.dropout_prob > 60 %}text-danger{% elif risk.dropout_prob > 35 %}text-warning{% else %}text-success{% endif %}">{{ risk.dropout_prob }}%</div>
+            <div class="stat-label">Support Need %</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-family:'Outfit'; font-size:1.4rem; font-weight:800; margin-bottom:6px;">
+                <span class="badge {% if risk.academic_risk=='High'%}danger{% elif risk.academic_risk=='Medium'%}warning{% else %}success{% endif %}">{{ risk.academic_risk }}</span>
+            </div>
+            <div class="stat-label">Academic Risk</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-family:'Outfit'; font-size:1.4rem; font-weight:800; margin-bottom:6px;">
+                <span class="badge {% if risk.behavioral_risk=='High'%}danger{% elif risk.behavioral_risk=='Medium'%}warning{% else %}success{% endif %}">{{ risk.behavioral_risk }}</span>
+            </div>
+            <div class="stat-label">Behavioral Risk</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ student.attendance|default('0') }}%</div>
+            <div class="stat-label">Attendance</div>
+        </div>
     </div>
 
-    <div class="section">
-        <h2 class="section-title">1. Student Demographics</h2>
-        <table>
-            <tr><th>Full Name</th><td>{{ student.name }}</td><th>USN Reference</th><td>{{ student.usn }}</td></tr>
-            <tr><th>Branch / Major</th><td>{{ student.branch }}</td><th>Primary Mentor</th><td>{{ student.mentor_name }}</td></tr>
-        </table>
+    <!-- Explainability -->
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;">🧠 Assessment — Key Influencing Factors</h3>
+        <ul style="color:#cbd5e1; font-size:0.92rem; line-height:1.8; padding-left:20px; margin:0;">
+            {% for r in risk.reasons %}
+            <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+        <div style="margin-top:12px; font-size:0.78rem; color:var(--text-muted);">
+            Computed System Tracking · Confidence Score: {{ (risk.confidence * 100)|round }}%
+        </div>
     </div>
 
-    <div class="section">
-        <h2 class="section-title">2. Global Academic Evaluation</h2>
-        <table>
+    <!-- Academic Metrics -->
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;">📊 Academic Summary</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">SGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.sgpa|default('N/A') }}</div></div>
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">CGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.cgpa|default('N/A') }}</div></div>
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">Activity Points</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-green);">{{ student.activity_points|default('0') }}/50</div></div>
+        </div>
+    </div>
+
+    <!-- Weekly History -->
+    {% if history and history|length > 0 %}
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;">📋 Behavioral History</h3>
+        <table class="data-table">
+            <tr><th>Week</th><th>Stress (1-10)</th><th>Academic Issues</th><th>Need Help</th></tr>
+            {% for h in history %}
             <tr>
-                <th>Total Attendance</th><td>{{ student.attendance|default('N/A') }}%</td>
-                <th>SGPA / CGPA</th><td>{{ student.sgpa|default('0.0') }} / {{ student.cgpa|default('0.0') }}</td>
+                <td>Week {{ h.week }}</td>
+                <td class="{% if h.stress|int >= 7 %}text-danger{% elif h.stress|int >= 4 %}text-warning{% else %}text-success{% endif %}">{{ h.stress }}</td>
+                <td class="{% if h.academic_issues|lower == 'yes' %}text-danger{% else %}text-success{% endif %}">{{ h.academic_issues }}</td>
+                <td class="{% if h.need_help|lower == 'yes' %}text-danger{% else %}text-success{% endif %}">{{ h.need_help|default('No') }}</td>
             </tr>
-            <tr>
-                <th>Activity Points Accrued</th><td colspan="3">{{ student.activity_points|default('0') }} out of 50</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="section">
-        <h2 class="section-title">3. Transcript Histories</h2>
-        {% for sem_idx, sub_list in student.marks.items() %}
-        <h4 style="margin: 15px 0 5px 0;">Semester {{ sem_idx }}</h4>
-        <table>
-            <tr><th>Subject Title</th><th>CIE Record</th><th>SEE Record</th></tr>
-            {% for sub in sub_list %}
-            <tr><td>{{ sub.subject }}</td><td>{{ sub.cie }} / 50</td><td>{{ sub.see }} / 100</td></tr>
             {% endfor %}
         </table>
-        {% else %}
-        <p>No formal transcripts recorded in system.</p>
-        {% endfor %}
     </div>
+    {% endif %}
 
-    <div class="section">
-        <h2 class="section-title">4. Institutional System Risk Scoring</h2>
-        <p>Computed via logic-fusion of academics, marks, and student behavioral weekly logs.</p>
-        <table>
-            <tr>
-                <th>Assessed Risk Score (Out of 100)</th>
-                <td><strong>{{ risk.score }}</strong></td>
-                <th>Intervention Status Categorization</th>
-                <td class="{% if risk.level == 'High' %}risk-high{% elif risk.level == 'Medium' %}risk-med{% else %}risk-low{% endif %}">Tier: {{ risk.level }}</td>
-            </tr>
-        </table>
+    <div style="text-align:center; color:var(--text-muted); font-size:0.78rem; margin-top:16px;">
+        Generated: {{ now if now else 'N/A' }} · Intelligent Student Monitoring System v2.0
     </div>
-    
-    <div style="margin-top: 60px; display: flex; justify-content: space-between;">
-        <div style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 10px;">Mentor Signature</div>
-        <div style="text-align: center; border-top: 1px solid #000; width: 30%; padding-top: 10px;">HOD Verification</div>
-    </div>
-
 </div>
-
 </body>
 </html>

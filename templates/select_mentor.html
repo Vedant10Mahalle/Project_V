@@ -2,28 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Select Faculty Mentor</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Mentor — Project V</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+<body style="align-items: center; justify-content: center; min-height: 100vh;">
 
-<div class="glass-container" style="max-width: 500px; padding: 40px; text-align: center;">
-    <h2 style="margin: 0 0 10px 0; color: #f8fafc;">Welcome to the Academic Portal</h2>
-    <p style="color: #94a3b8; font-size: 0.95rem; margin-bottom: 30px;">Before you proceed, you must select your assigned Faculty Mentor. This links your academic performance tracking directly to their dashboard.</p>
+<div class="glass-container" style="max-width:480px; text-align: center; margin: auto;">
+    <div style="font-size:3rem; margin-bottom:16px;">🌱</div>
+    <h2 style="margin:0 0 12px; font-size: 1.8rem; font-weight: 600;">Choose Your Mentor</h2>
+    <p style="color:var(--text-secondary); font-size:0.95rem; margin:0 0 32px 0;">
+        Your mentor will guide you and provide personalized support throughout your journey.
+    </p>
 
-    <form method="POST" action="/student/select_mentor" style="text-align: left;">
-        <div class="form-group" style="margin-bottom: 30px;">
+    <form method="POST" action="/student/select_mentor" style="text-align:left;">
+        <div class="form-group" style="margin-bottom:32px;">
             <label>Select Faculty Mentor</label>
-            <select name="mentor_id" required style="width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); color: #f8fafc; border-radius: 8px;">
-                <option value="" disabled selected>Select from dropdown...</option>
+            <select name="mentor_id" required>
+                <option value="" disabled selected>— Choose from list —</option>
                 {% for t in teachers %}
-                    <option value="{{ t.teacher_id }}">{{ t.name }} ({{ t.department }})</option>
+                <option value="{{ t.teacher_id }}">{{ t.name }} — {{ t.department }}</option>
                 {% endfor %}
             </select>
         </div>
 
-        <button type="submit" class="btn" style="width: 100%; padding: 14px; font-size: 1rem;">Confirm Assignment</button>
+        <button type="submit" class="btn" style="width:100%; padding:16px; margin-bottom: 12px;">Confirm ✓</button>
+        <a href="/logout" class="btn secondary" style="width:100%; display:block;">Logout</a>
     </form>
 </div>
 
