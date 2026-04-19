@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ML Inference Engine — {{ student.name }}</title>
     <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .ml-layout { max-width: 900px; margin: 40px auto; }
         .back-link { margin-bottom: 24px; display: inline-block; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
@@ -104,31 +105,20 @@
     </div>
 
     <!-- SECTION 3: SHAP MODEL EXPLAINABILITY -->
-    <div class="panel" style="margin-bottom: 60px;">
+    <div class="panel">
         <div class="panel-header">
             3. Feature Importance (SHAP Analysis)
-            <span style="font-size: 1.2rem;">📈</span>
+            <span style="font-size: 1.2rem;">📊</span>
         </div>
         
         <div style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); background: #f8fafc; padding: 12px; border-radius: 6px;">
-            <strong>Interpretation Guide:</strong> Values represent the relative impact of each feature on the model's final dropout probability prediction.
-            <div style="display: flex; gap: 16px; margin-top: 8px;">
-                <span style="display: flex; align-items: center; gap: 6px;"><span style="width:12px;height:12px;background:#dc2626;border-radius:2px;"></span> Increases Risk</span>
-                <span style="display: flex; align-items: center; gap: 6px;"><span style="width:12px;height:12px;background:#059669;border-radius:2px;"></span> Decreases Risk</span>
-            </div>
+            <strong>Interpretation Guide:</strong> Values represent the relative impact of each feature on the model's final dropout probability prediction. Feature contributions pushing the risk higher are shown in <span style="color:#dc2626; font-weight:bold;">red</span>, while those lowering the risk are <span style="color:#059669; font-weight:bold;">green</span>.
         </div>
 
         {% if risk.shap_values %}
-            {% for feature, value in risk.shap_values.items() %}
-            <div class="shap-row">
-                <div class="shap-label">{{ feature }}</div>
-                <div class="shap-bar-container">
-                    <div class="shap-bar {% if value > 0 %}shap-risk{% else %}shap-safe{% endif %}" 
-                         style="width: {{ (value|abs * 100)|round }}%;"></div>
-                </div>
-                <div class="shap-value">[{{ ('+' if value > 0 else '') ~ (value|round(3)) }}]</div>
+            <div style="position: relative; height: 350px; width: 100%;">
+                <canvas id="shapChart"></canvas>
             </div>
-            {% endfor %}
         {% else %}
             <div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 20px;">
                 SHAP computations unavailable for this profile instance.
@@ -136,7 +126,149 @@
         {% endif %}
     </div>
 
+    <!-- SECTION 4: RISK TREND ANALYSIS -->
+    <div class="panel" style="margin-bottom: 60px;">
+        <div class="panel-header">
+            4. Predictive Risk Trend (Last 7 Days)
+            <span style="font-size: 1.2rem;">📈</span>
+        </div>
+        
+        <div style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); background: #f8fafc; padding: 12px; border-radius: 6px;">
+            This chart tracks the student's dynamic dropout probability over the last 7 check-in days. A steady upward trend indicates escalating risk.
+        </div>
+
+        {% if risk.trend_data and risk.trend_data|length > 0 %}
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="trendChart"></canvas>
+            </div>
+        {% else %}
+            <div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 20px;">
+                Insufficient tracking data to plot a trend.
+            </div>
+        {% endif %}
+    </div>
+
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // --- 1. SHAP Chart ---
+        {% if risk.shap_values %}
+            const shapRaw = {{ risk.shap_values | tojson | safe }};
+            // Sort features by absolute importance for better visualization
+            const shapEntries = Object.entries(shapRaw).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+            
+            const shapLabels = shapEntries.map(e => e[0]);
+            const shapData = shapEntries.map(e => e[1]);
+            
+            // Colors: red for positive (risk increasing), green for negative (risk decreasing)
+            const shapColors = shapData.map(val => val > 0 ? 'rgba(220, 38, 38, 0.8)' : 'rgba(5, 150, 105, 0.8)');
+            const shapBorders = shapData.map(val => val > 0 ? 'rgba(220, 38, 38, 1)' : 'rgba(5, 150, 105, 1)');
+
+            const ctxShap = document.getElementById('shapChart').getContext('2d');
+            new Chart(ctxShap, {
+                type: 'bar',
+                data: {
+                    labels: shapLabels,
+                    datasets: [{
+                        label: 'Feature Impact on Risk',
+                        data: shapData,
+                        backgroundColor: shapColors,
+                        borderColor: shapBorders,
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Makes it a horizontal bar chart
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw;
+                                    let prefix = val > 0 ? '+' : '';
+                                    return ` Impact: ${prefix}${parseFloat(val).toFixed(2)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#e2e8f0' },
+                            title: { display: true, text: 'SHAP Value (Impact Indicator)' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+
+        // --- 2. Trend Line Chart ---
+        {% if risk.trend_data and risk.trend_data|length > 0 %}
+            const trendRaw = {{ risk.trend_data | tojson | safe }};
+            const trendLabels = trendRaw.map(t => t.date);
+            const trendData = trendRaw.map(t => t.score);
+
+            const ctxTrend = document.getElementById('trendChart').getContext('2d');
+            
+            // Create gradient fill for the line chart
+            const gradient = ctxTrend.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)'); // Indigo transparent
+            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.0)');
+
+            new Chart(ctxTrend, {
+                type: 'line',
+                data: {
+                    labels: trendLabels,
+                    datasets: [{
+                        label: 'Dropout Probability (%)',
+                        data: trendData,
+                        borderColor: '#6366f1',
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#6366f1',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        fill: true,
+                        tension: 0.4 // Smooth curves
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` Risk Score: ${context.raw}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: '#e2e8f0', borderDash: [5, 5] },
+                            title: { display: true, text: 'Probability (%)' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        {% endif %}
+    });
+</script>
 
 </body>
 </html>
