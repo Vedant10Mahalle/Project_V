@@ -30,30 +30,30 @@
     <form method="POST" action="/student/daily_checkin">
         
         <div class="form-section">
-            <div class="section-title">How are you feeling today?</div>
+            <div class="section-title">How are you feeling today</div>
             <div class="mood-grid">
                 <input type="radio" name="mood" value="3" id="mood-good" style="display:none;" required>
                 <label class="mood-btn" for="mood-good">
-                    <span class="mood-emoji">😄</span>
+                    <span class="mood-emoji"></span>
                     <span class="mood-label">Good</span>
                 </label>
 
                 <input type="radio" name="mood" value="2" id="mood-okay" style="display:none;">
                 <label class="mood-btn" for="mood-okay">
-                    <span class="mood-emoji">😐</span>
+                    <span class="mood-emoji"></span>
                     <span class="mood-label">Okay</span>
                 </label>
 
                 <input type="radio" name="mood" value="1" id="mood-bad" style="display:none;">
                 <label class="mood-btn" for="mood-bad">
-                    <span class="mood-emoji">😞</span>
+                    <span class="mood-emoji"></span>
                     <span class="mood-label">Rough</span>
                 </label>
             </div>
         </div>
 
         <div class="form-section">
-            <div class="section-title">Energy Level ⚡</div>
+            <div class="section-title">Energy Level </div>
             <div class="slider-track">
                 <span style="font-size: 0.85rem; color: var(--text-muted);">Low</span>
                 <input type="range" name="energy" min="1" max="5" value="3" required>
@@ -71,7 +71,7 @@
         </div>
 
         <div class="form-section">
-            <div class="section-title">Did you attend all classes today?</div>
+            <div class="section-title">Did you attend all classes today</div>
             <div class="toggle-group">
                 <input type="radio" name="attendance" value="yes" id="att-yes" style="display:none;" checked>
                 <label class="toggle-btn" for="att-yes">Yes, all of them</label>
@@ -82,7 +82,7 @@
         </div>
 
         <div class="form-section">
-            <div class="section-title">Biggest struggle today?</div>
+            <div class="section-title">Biggest struggle today</div>
             <select name="difficulty" style="background: var(--bg-card);">
                 <option value="none">None, smooth sailing</option>
                 <option value="academic">Academic / Understanding</option>
@@ -93,11 +93,11 @@
         </div>
 
         <div class="form-section">
-            <div class="section-title">One win today? 🌟</div>
+            <div class="section-title">One win today </div>
             <input type="text" name="daily_win" class="win-input" placeholder="e.g. Finished my assignment early" required>
         </div>
 
-        <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 1.05rem;">Submit Check-in ✓</button>
+        <button type="submit" class="btn" style="width: 100%; padding: 16px; font-size: 1.05rem;">Submit Check-in </button>
 
     </form>
 </div>

@@ -28,6 +28,15 @@ try:
 except FileNotFoundError:
     print("WARN: No trained model found. Using deterministic risk engine fallback.")
 
+_SUBJECT_MODEL = None
+try:
+    with open('models/subject_model.pkl', 'rb') as _f:
+        _sub_model_data = pickle.load(_f)
+        _SUBJECT_MODEL = _sub_model_data['model']
+    print(f"INFO: Subject ML model loaded")
+except FileNotFoundError:
+    print("WARN: No trained subject model found.")
+
 app = Flask(__name__)
 app.secret_key = "super_secret_nmam_key"
 
@@ -186,10 +195,20 @@ def load_student_profile(usn):
         for _, row in my_marks.iterrows():
             sem = str(int(row['semester'])) if pd.notna(row['semester']) else '0'
             if sem not in record['marks']: record['marks'][sem] = []
+            
+            pass_prob = -1
+            if _SUBJECT_MODEL is not None and pd.notna(row['cie']):
+                try:
+                    prob = _SUBJECT_MODEL.predict_proba([[float(row['cie'])]])[0][1]
+                    pass_prob = int(prob * 100)
+                except:
+                    pass
+                    
             record['marks'][sem].append({
                 'subject': row['subject_name'],
                 'cie': row['cie'],
-                'see': row['see']
+                'see': row['see'],
+                'ml_pass_prob': pass_prob
             })
     return record
 
@@ -203,13 +222,13 @@ def get_student_badges(usn):
     streak = get_student_streak(usn)
 
     if streak >= 3:
-        badges.append({'icon': '🔥', 'name': '3-Day Streak', 'desc': 'Checked in 3 days straight!', 'earned': True})
+        badges.append({'icon': '', 'name': '3-Day Streak', 'desc': 'Checked in 3 days straight!', 'earned': True})
     if streak >= 5:
         badges.append({'icon': '⭐', 'name': 'Consistent Student', 'desc': '5-day check-in streak!', 'earned': True})
     if streak >= 10:
-        badges.append({'icon': '🏆', 'name': 'Dedication Master', 'desc': '10-day streak champion!', 'earned': True})
+        badges.append({'icon': '', 'name': 'Dedication Master', 'desc': '10-day streak champion!', 'earned': True})
     if streak >= 20:
-        badges.append({'icon': '💎', 'name': 'Diamond Streak', 'desc': '20 days of consistency!', 'earned': True})
+        badges.append({'icon': '', 'name': 'Diamond Streak', 'desc': '20 days of consistency!', 'earned': True})
 
     df = get_df("data/daily_checkins.csv")
     total = 0
@@ -217,35 +236,35 @@ def get_student_badges(usn):
         total = len(df[df['usn'].astype(str) == str(usn)])
 
     if total >= 1:
-        badges.append({'icon': '🎯', 'name': 'First Step', 'desc': 'Completed first check-in!', 'earned': True})
+        badges.append({'icon': '', 'name': 'First Step', 'desc': 'Completed first check-in!', 'earned': True})
     if total >= 25:
-        badges.append({'icon': '📚', 'name': 'Regular', 'desc': '25 total check-ins!', 'earned': True})
+        badges.append({'icon': '', 'name': 'Regular', 'desc': '25 total check-ins!', 'earned': True})
 
     profile = load_student_profile(usn)
     if profile:
         sgpa = float(profile.get('sgpa', 0))
         if sgpa >= 8.5:
-            badges.append({'icon': '🎓', 'name': 'Academic Hero', 'desc': f'SGPA {sgpa}!', 'earned': True})
+            badges.append({'icon': '', 'name': 'Academic Hero', 'desc': f'SGPA {sgpa}!', 'earned': True})
         att = float(profile.get('attendance', 0))
         if att >= 90:
-            badges.append({'icon': '📝', 'name': 'Perfect Attendance', 'desc': f'{att}% attendance!', 'earned': True})
+            badges.append({'icon': '', 'name': 'Perfect Attendance', 'desc': f'{att}% attendance!', 'earned': True})
 
     agg = get_daily_checkin_aggregates(usn, days=7)
     if agg['checkin_count'] >= 5 and agg['avg_stress'] <= 2.5:
-        badges.append({'icon': '💪', 'name': 'Zen Master', 'desc': 'Low stress all week!', 'earned': True})
+        badges.append({'icon': '', 'name': 'Zen Master', 'desc': 'Low stress all week!', 'earned': True})
 
     # Locked badges (not yet earned)
     earned_names = {b['name'] for b in badges}
     all_possible = [
-        {'icon': '🔥', 'name': '3-Day Streak', 'desc': 'Check in 3 days in a row'},
+        {'icon': '', 'name': '3-Day Streak', 'desc': 'Check in 3 days in a row'},
         {'icon': '⭐', 'name': 'Consistent Student', 'desc': 'Reach a 5-day streak'},
-        {'icon': '🏆', 'name': 'Dedication Master', 'desc': 'Reach a 10-day streak'},
-        {'icon': '💎', 'name': 'Diamond Streak', 'desc': 'Reach a 20-day streak'},
-        {'icon': '🎯', 'name': 'First Step', 'desc': 'Complete your first check-in'},
-        {'icon': '📚', 'name': 'Regular', 'desc': 'Complete 25 check-ins'},
-        {'icon': '🎓', 'name': 'Academic Hero', 'desc': 'Achieve SGPA 8.5+'},
-        {'icon': '📝', 'name': 'Perfect Attendance', 'desc': 'Get 90%+ attendance'},
-        {'icon': '💪', 'name': 'Zen Master', 'desc': 'Keep stress low for a whole week'},
+        {'icon': '', 'name': 'Dedication Master', 'desc': 'Reach a 10-day streak'},
+        {'icon': '', 'name': 'Diamond Streak', 'desc': 'Reach a 20-day streak'},
+        {'icon': '', 'name': 'First Step', 'desc': 'Complete your first check-in'},
+        {'icon': '', 'name': 'Regular', 'desc': 'Complete 25 check-ins'},
+        {'icon': '', 'name': 'Academic Hero', 'desc': 'Achieve SGPA 8.5+'},
+        {'icon': '', 'name': 'Perfect Attendance', 'desc': 'Get 90%+ attendance'},
+        {'icon': '', 'name': 'Zen Master', 'desc': 'Keep stress low for a whole week'},
     ]
     for b in all_possible:
         if b['name'] not in earned_names:
@@ -259,37 +278,37 @@ def get_motivational_messages(usn, profile, streak, agg):
     messages = []
 
     if streak >= 5:
-        messages.append({'icon': '🔥', 'text': f"You're on fire! {streak}-day streak — keep it going!"})
+        messages.append({'icon': '', 'text': f"You're on fire! {streak}-day streak — keep it going!"})
     elif streak >= 3:
-        messages.append({'icon': '💪', 'text': f"Nice consistency! {streak} days in a row!"})
+        messages.append({'icon': '', 'text': f"Nice consistency! {streak} days in a row!"})
     elif streak == 0:
-        messages.append({'icon': '👋', 'text': "Start a new streak today with a quick check-in!"})
+        messages.append({'icon': '', 'text': "Start a new streak today with a quick check-in!"})
 
     if agg['checkin_count'] > 0:
         if agg['avg_stress'] <= 2.0:
-            messages.append({'icon': '😌', 'text': "Your stress levels look great this week!"})
+            messages.append({'icon': '', 'text': "Your stress levels look great this week!"})
         elif agg['avg_stress'] >= 4.0:
             messages.append({'icon': '🫂', 'text': "Stress has been high — remember, it's okay to ask for help."})
         if agg['avg_mood'] >= 2.5:
-            messages.append({'icon': '😊', 'text': "Your mood trend is positive — keep smiling!"})
+            messages.append({'icon': '', 'text': "Your mood trend is positive — keep smiling!"})
         if agg['avg_energy'] <= 2.0:
-            messages.append({'icon': '🔋', 'text': "Energy running low? Try a short walk between classes."})
+            messages.append({'icon': '', 'text': "Energy running low Try a short walk between classes."})
 
     att = float(profile.get('attendance', 0))
     sgpa = float(profile.get('sgpa', 0))
 
     if att < 75 and att > 0:
-        messages.append({'icon': '📅', 'text': "Your attendance needs a boost — every class matters!"})
+        messages.append({'icon': '', 'text': "Your attendance needs a boost — every class matters!"})
     elif att >= 90:
-        messages.append({'icon': '✅', 'text': "Incredible attendance! Consistency is your superpower."})
+        messages.append({'icon': '', 'text': "Incredible attendance! Consistency is your superpower."})
 
     if sgpa >= 8.0:
-        messages.append({'icon': '🌟', 'text': "Academic excellence! You're among the top performers."})
+        messages.append({'icon': '', 'text': "Academic excellence! You're among the top performers."})
     elif 0 < sgpa < 5.0:
-        messages.append({'icon': '📖', 'text': "Grades need attention. Reach out to your mentor for tips."})
+        messages.append({'icon': '', 'text': "Grades need attention. Reach out to your mentor for tips."})
 
     if not messages:
-        messages.append({'icon': '👍', 'text': "You're doing great. Keep pushing forward!"})
+        messages.append({'icon': '', 'text': "You're doing great. Keep pushing forward!"})
 
     return messages
 
@@ -442,7 +461,7 @@ def generate_smart_alerts(teacher_id):
             stresses = recent_3['stress'].astype(float).values
             if all(s >= 4 for s in stresses):
                 alerts.append({
-                    'type': 'danger', 'icon': '🚨',
+                    'type': 'danger', 'icon': '',
                     'message': f'{name} — stress level high for 3 consecutive check-ins',
                     'usn': usn
                 })
@@ -450,7 +469,7 @@ def generate_smart_alerts(teacher_id):
             moods = recent_3['mood'].astype(float).values
             if all(m <= 1 for m in moods):
                 alerts.append({
-                    'type': 'danger', 'icon': '😟',
+                    'type': 'danger', 'icon': '',
                     'message': f'{name} — consistently low mood for 3 check-ins',
                     'usn': usn
                 })
@@ -460,7 +479,7 @@ def generate_smart_alerts(teacher_id):
             missed = recent_5[recent_5['attended_all'].astype(str).str.lower() == 'no']
             if len(missed) >= 3:
                 alerts.append({
-                    'type': 'warning', 'icon': '📉',
+                    'type': 'warning', 'icon': '',
                     'message': f'{name} — attendance dropped ({len(missed)} missed of last {len(recent_5)} days)',
                     'usn': usn
                 })
@@ -1034,7 +1053,7 @@ def student_daily_checkin():
         }
         df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
         save_df(df, "data/daily_checkins.csv")
-        flash("Check-in complete! Keep your streak going! 🔥")
+        flash("Check-in complete! Keep your streak going! ")
         return redirect(url_for("student"))
 
     streak = get_student_streak(usn)
@@ -1210,6 +1229,175 @@ def admin_upload_csv(entity):
     except Exception as e:
         flash(f"Error processing CSV: {str(e)}", "error")
 
+    return redirect(url_for("admin_dashboard"))
+
+@app.route("/admin/train_model", methods=["POST"])
+def admin_train_model():
+    if not admin_required(): return redirect(url_for("login"))
+    if 'file' not in request.files:
+        flash("No file provided.", "error")
+        return redirect(url_for("admin_dashboard"))
+    file = request.files['file']
+    if file.filename == '':
+        flash("No selected file.", "error")
+        return redirect(url_for("admin_dashboard"))
+
+    try:
+        import io
+        stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+        uploaded_df = pd.read_csv(stream)
+        
+        target_path = "data/academic_marks.csv"
+        df = get_df(target_path)
+        
+        if not df.empty:
+            df = pd.concat([df, uploaded_df], ignore_index=True)
+        else:
+            df = uploaded_df
+            
+        save_df(df, target_path)
+        
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.metrics import accuracy_score
+        
+        train_data = df.dropna(subset=['cie', 'see']).copy()
+        
+        if len(train_data) < 10:
+            flash(f"Marks uploaded, but skipping retrain: Not enough valid rows with CIE and SEE (found {len(train_data)}).", "warning")
+            return redirect(url_for("admin_dashboard"))
+            
+        train_data['cie'] = pd.to_numeric(train_data['cie'], errors='coerce')
+        train_data['see'] = pd.to_numeric(train_data['see'], errors='coerce')
+        train_data = train_data.dropna(subset=['cie', 'see'])
+        
+        total = train_data['cie'] + train_data['see']
+        target = ((total >= 40) & (train_data['see'] >= 35)).astype(int)
+        
+        clf = RandomForestClassifier(n_estimators=50, max_depth=5, random_state=42)
+        X = train_data[['cie']]
+        clf.fit(X, target)
+        
+        acc = accuracy_score(target, clf.predict(X))
+        
+        os.makedirs('models', exist_ok=True)
+        model_data = {'model': clf, 'features': ['cie']}
+        with open('models/subject_model.pkl', 'wb') as f:
+            pickle.dump(model_data, f)
+            
+        global _SUBJECT_MODEL
+        _SUBJECT_MODEL = clf
+        
+        flash(f"Successfully appended {len(uploaded_df)} records. Model Retrained across {len(train_data)} total samples. New Training Accuracy: {acc*100:.1f}%.", "success")
+    except Exception as e:
+        flash(f"Error during training pipeline: {str(e)}", "error")
+
+    return redirect(url_for("admin_dashboard"))
+
+def generate_global_model_data():
+    """Aggregates all 7 features for every student directly from the live DB."""
+    students = get_df("data/students.csv")
+    if students.empty: return pd.DataFrame()
+    
+    rows = []
+    for _, s in students.iterrows():
+        prof = load_student_profile(s['usn'])
+        att = float(prof.get('attendance', 92))
+        sgpa = float(prof.get('sgpa', 8.5))
+        if pd.isna(sgpa) or sgpa == 0: sgpa = 8.5
+        
+        agg = get_daily_checkin_aggregates(s['usn'], days=7)
+        checkins = agg.get('checkin_count', 0)
+        
+        avg_stress = agg.get('avg_stress', 2.0) if checkins > 0 else 2.0
+        missed_days = agg.get('missed_days', 0) if checkins > 0 else 0
+        avg_mood = agg.get('avg_mood', 3.0) if checkins > 0 else 3.0
+        avg_energy = agg.get('avg_energy', 4.0) if checkins > 0 else 4.0
+        streak = agg.get('streak', 0)
+        
+        base_score = (
+            (100 - att) * 0.40 +
+            (10 - sgpa) * 7.0 +
+            avg_stress * 4.5 +
+            missed_days * 3.5 +
+            (3 - avg_mood) * 5.0 +
+            (5 - avg_energy) * 2.0 +
+            max(0, 7 - streak) * 1.5
+        )
+        target = 1 if base_score > 50 else 0
+        
+        rows.append({
+            'usn': s['usn'],
+            'attendance': att,
+            'sgpa': sgpa,
+            'avg_stress': avg_stress,
+            'missed_days': missed_days,
+            'avg_mood': avg_mood,
+            'avg_energy': avg_energy,
+            'streak': streak,
+            'target': target
+        })
+        
+    return pd.DataFrame(rows)
+
+@app.route("/admin/export_training_data")
+def admin_export_training_data():
+    if not admin_required(): return redirect(url_for("login"))
+    df = generate_global_model_data()
+    if df.empty:
+        flash("No data available to export.", "warning")
+        return redirect(url_for("admin_dashboard"))
+    
+    csv_data = df.to_csv(index=False)
+    response = app.response_class(
+        response=csv_data,
+        status=200,
+        mimetype='text/csv'
+    )
+    response.headers["Content-Disposition"] = "attachment; filename=global_ml_training_data.csv"
+    return response
+
+@app.route("/admin/retrain_global_model", methods=["POST"])
+def admin_retrain_global_model():
+    if not admin_required(): return redirect(url_for("login"))
+    
+    df = generate_global_model_data()
+    if len(df) < 2:
+        flash("Not enough live student records to train globally. Need at least 2 users.", "error")
+        return redirect(url_for("admin_dashboard"))
+        
+    try:
+        from sklearn.ensemble import RandomForestClassifier
+        from sklearn.metrics import accuracy_score
+        import os, pickle
+        
+        X = df[['attendance', 'sgpa', 'avg_stress', 'missed_days', 'avg_mood', 'avg_energy', 'streak']]
+        y = df['target']
+        
+        clf = RandomForestClassifier(n_estimators=100, max_depth=8, random_state=42)
+        clf.fit(X, y)
+        
+        acc = accuracy_score(y, clf.predict(X))
+        
+        os.makedirs('models', exist_ok=True)
+        feature_names = ['attendance', 'sgpa', 'avg_stress', 'missed_days', 'avg_mood', 'avg_energy', 'streak']
+        model_data = {
+            'model': clf,
+            'feature_names': feature_names,
+            'n_estimators': 100,
+            'max_depth': 8,
+            'training_samples': len(df)
+        }
+        with open('models/risk_model.pkl', 'wb') as f:
+            pickle.dump(model_data, f)
+            
+        global _ML_MODEL, _ML_FEATURE_NAMES
+        _ML_MODEL = clf
+        _ML_FEATURE_NAMES = feature_names
+        
+        flash(f"Global Risk Model Retrained LIVE on {len(df)} records. New Accuracy: {acc*100:.1f}%.", "success")
+    except Exception as e:
+        flash(f"Global Model Training Error: {str(e)}", "error")
+        
     return redirect(url_for("admin_dashboard"))
 
 

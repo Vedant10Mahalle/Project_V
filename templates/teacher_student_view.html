@@ -61,7 +61,6 @@
     <div class="panel">
         <div class="panel-header">
             1. Predictive Risk Summary
-            <span style="font-size: 1.2rem;">📊</span>
         </div>
         
         <div class="risk-grid">
@@ -91,7 +90,6 @@
     <div class="panel">
         <div class="panel-header">
             2. ML Reasoning & Contributing Factors
-            <span style="font-size: 1.2rem;">🧠</span>
         </div>
         
         <ul class="explanation-list">
@@ -108,7 +106,6 @@
     <div class="panel">
         <div class="panel-header">
             3. Feature Importance (SHAP Analysis)
-            <span style="font-size: 1.2rem;">📊</span>
         </div>
         
         <div style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); background: #f8fafc; padding: 12px; border-radius: 6px;">
@@ -130,7 +127,6 @@
     <div class="panel" style="margin-bottom: 60px;">
         <div class="panel-header">
             4. Predictive Risk Trend (Last 7 Days)
-            <span style="font-size: 1.2rem;">📈</span>
         </div>
         
         <div style="margin-bottom: 24px; font-size: 0.9rem; color: var(--text-secondary); background: #f8fafc; padding: 12px; border-radius: 6px;">
@@ -145,6 +141,99 @@
             <div style="text-align: center; color: var(--text-muted); font-style: italic; padding: 20px;">
                 Insufficient tracking data to plot a trend.
             </div>
+        {% endif %}
+    </div>
+
+    <!-- SECTION 5: ACADEMIC PERFORMANCE DETAILS -->
+    <div class="panel" style="margin-bottom: 60px;">
+        <div class="panel-header">
+            5. Academic Performance Details
+        </div>
+        {% if student.marks %}
+        <div style="margin-bottom: 16px;">
+            <label style="font-weight: 500; margin-right: 8px; font-size: 0.9rem; color: var(--text-secondary);">Select Semester:</label>
+            <select id="semSelect" onchange="showSemester(this.value)" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border-light);">
+                {% for sem in student.marks.keys() %}
+                <option value="{{ sem }}">Semester {{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% for sem, marks_list in student.marks.items() %}
+        <div id="marks-sem-{{ sem }}" class="sem-marks" style="display: none;">
+            
+            {% set summary = student.sem_summaries.get(sem) %}
+            {% if summary %}
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+                <div><span style="color: var(--text-secondary);">Attendance:</span> <strong style="color: var(--text-primary);">{{ summary.attendance }}%</strong></div>
+                <div><span style="color: var(--text-secondary);">SGPA:</span> <strong style="color: var(--text-primary);">{{ summary.sgpa }}</strong></div>
+                <div><span style="color: var(--text-secondary);">CGPA:</span> <strong style="color: var(--text-primary);">{{ summary.cgpa }}</strong></div>
+                <div><span style="color: var(--text-secondary);">Activity Points:</span> <strong style="color: var(--text-primary);">{{ summary.activity_points }}</strong></div>
+            </div>
+            {% endif %}
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 0.95rem;">
+                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 12px; text-align: left; color: var(--text-secondary); font-weight: 600;">Subject</th>
+                        <th style="padding: 12px; text-align: center; color: var(--text-secondary); font-weight: 600;">CIE</th>
+                        <th style="padding: 12px; text-align: center; color: var(--text-secondary); font-weight: 600;">SEE</th>
+                        <th style="padding: 12px; text-align: center; color: var(--text-secondary); font-weight: 600;">Total</th>
+                        <th style="padding: 12px; text-align: center; color: var(--text-secondary); font-weight: 600;">ML Pass Prob.</th>
+                    </tr>
+                    {% set weak_subjects = [] %}
+                    {% for m in marks_list %}
+                        {% set cie = m.cie|default(0, true)|int %}
+                        {% set see = m.see|default(0, true)|int %}
+                        {% set total = cie + see %}
+                        {% if total < 40 or see < 35 %}
+                            {% set _ = weak_subjects.append(m.subject) %}
+                        {% endif %}
+                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                        <td style="padding: 12px; text-align: left; font-weight: 500;">{{ m.subject }}</td>
+                        <td style="padding: 12px; text-align: center;">{{ cie }}</td>
+                        <td style="padding: 12px; text-align: center;">{{ see }}</td>
+                        <td style="padding: 12px; text-align: center; {% if total < 40 or see < 35 %}color: #dc2626; font-weight: bold;{% else %}color: var(--text-primary); font-weight: 600;{% endif %}">{{ total }}</td>
+                        <td style="padding: 12px; text-align: center;">
+                            {% if m.ml_pass_prob is defined and m.ml_pass_prob != -1 %}
+                                <span style="font-weight: 600; color: {% if m.ml_pass_prob >= 75 %}#059669{% elif m.ml_pass_prob >= 40 %}#d97706{% else %}#dc2626{% endif %};">{{ m.ml_pass_prob }}%</span>
+                            {% else %}
+                                <span style="color: var(--text-muted);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            
+            {% if weak_subjects %}
+            <div style="padding: 16px; background: #fee2e2; border-left: 4px solid #dc2626; border-radius: 4px; margin-top: 16px;">
+                <strong style="color: #991b1b; font-size: 0.95rem; display: block; margin-bottom: 4px;">Needs Attention (Weak Subjects):</strong>
+                <p style="margin: 0; color: #7f1d1d; font-size: 0.9rem;">{{ weak_subjects | join(', ') }}</p>
+                <div style="font-size: 0.8rem; color: #991b1b; margin-top: 8px;">* Subjects with Total &lt; 40 or SEE &lt; 35</div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <script>
+            function showSemester(sem) {
+                document.querySelectorAll('.sem-marks').forEach(el => el.style.display = 'none');
+                const target = document.getElementById('marks-sem-' + sem);
+                if (target) {
+                    target.style.display = 'block';
+                }
+            }
+            window.addEventListener('DOMContentLoaded', () => {
+                const select = document.getElementById('semSelect');
+                if(select && select.options.length > 0) {
+                    showSemester(select.options[0].value);
+                }
+            });
+        </script>
+        {% else %}
+        <div style="padding: 24px; text-align: center; color: var(--text-muted); background: #f8fafc; border-radius: 6px;">
+            No academic marks recorded yet.
+        </div>
         {% endif %}
     </div>
 

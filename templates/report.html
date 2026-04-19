@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Report — {{ student.name }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <style>
         @media print {
@@ -23,7 +23,7 @@
             <div style="color:var(--text-secondary); font-family:monospace;">{{ student.usn }} · {{ student.branch }}</div>
         </div>
         <div class="no-print" style="display:flex; gap:10px;">
-            <button onclick="window.print()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem;">🖨️ Print</button>
+            <button onclick="window.print()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem;"> Print</button>
             <a href="javascript:history.back()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem; text-decoration:none;">← Back</a>
         </div>
     </div>
@@ -67,7 +67,7 @@
 
     <!-- Academic Metrics -->
     <div class="profile-section">
-        <h3 style="margin:0 0 14px; font-size:1.05rem;">📊 Academic Summary</h3>
+        <h3 style="margin:0 0 14px; font-size:1.05rem;"> Academic Summary</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
             <div><span style="color:var(--text-secondary); font-size:0.82rem;">SGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.sgpa|default('N/A') }}</div></div>
             <div><span style="color:var(--text-secondary); font-size:0.82rem;">CGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.cgpa|default('N/A') }}</div></div>
@@ -78,7 +78,7 @@
     <!-- Weekly History -->
     {% if history and history|length > 0 %}
     <div class="profile-section">
-        <h3 style="margin:0 0 14px; font-size:1.05rem;">📋 Behavioral History</h3>
+        <h3 style="margin:0 0 14px; font-size:1.05rem;"> Behavioral History</h3>
         <table class="data-table">
             <tr><th>Week</th><th>Stress (1-10)</th><th>Academic Issues</th><th>Need Help</th></tr>
             {% for h in history %}
