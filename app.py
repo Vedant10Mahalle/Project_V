@@ -924,6 +924,53 @@ def notify_students():
     flash("Reminder dispatched: 'Complete your daily check-in' sent to all students.")
     return redirect(url_for("teacher"))
 
+@app.route("/teacher/student/<usn>/academic_entry", methods=["GET", "POST"])
+def teacher_academic_entry(usn):
+    """Teacher uploads academic marks for a specific student."""
+    if session.get("role") != "teacher": return redirect(url_for("login"))
+    profile = load_student_profile(usn)
+    if not profile or profile.get('mentor_id') != session.get('user_id'):
+        return "Unauthorized Access. Student not in your batch.", 403
+
+    if request.method == "POST":
+        sem = request.form.get("semester")
+
+        # Update academic summary
+        summ_df = get_df("data/academic_summary.csv")
+        if summ_df.empty: summ_df = pd.DataFrame(columns=['usn','semester','attendance','sgpa','cgpa','activity_points'])
+
+        summ_data = {
+            'usn': usn, 'semester': sem,
+            'attendance': request.form.get("attendance"),
+            'sgpa': request.form.get("sgpa"),
+            'cgpa': request.form.get("cgpa"),
+            'activity_points': request.form.get("activity_points")
+        }
+        summ_df = summ_df[~((summ_df['usn'] == usn) & (summ_df['semester'].astype(str) == str(sem)))]
+        summ_df = pd.concat([summ_df, pd.DataFrame([summ_data])], ignore_index=True)
+        save_df(summ_df, "data/academic_summary.csv")
+
+        # Update subject marks
+        marks_df = get_df("data/academic_marks.csv")
+        if marks_df.empty: marks_df = pd.DataFrame(columns=['usn','semester','subject_name','cie','see'])
+        subs = request.form.getlist("subject_name[]")
+        cies = request.form.getlist("cie[]")
+        sees = request.form.getlist("see[]")
+        marks_df = marks_df[~((marks_df['usn'] == usn) & (marks_df['semester'].astype(str) == str(sem)))]
+        new_marks = []
+        for i in range(len(subs)):
+            if subs[i].strip() != "":
+                new_marks.append({'usn': usn, 'semester': sem, 'subject_name': subs[i],
+                                  'cie': cies[i] if cies[i] else 0, 'see': sees[i] if sees[i] else 0})
+        if new_marks:
+            marks_df = pd.concat([marks_df, pd.DataFrame(new_marks)], ignore_index=True)
+        save_df(marks_df, "data/academic_marks.csv")
+        flash(f"Academic marks updated for {profile.get('name', usn)}.")
+        return redirect(url_for("teacher_student_view", usn=usn))
+
+    return render_template("teacher_academic_entry.html",
+        student_name=profile.get('name', usn), student_usn=usn)
+
 
 # ═══════════════════════════════════════════════════════════════
 # STUDENT ROUTES
@@ -986,43 +1033,10 @@ def dismiss_alert():
 
 @app.route("/student/academic_entry", methods=["GET", "POST"])
 def student_academic_entry():
+    """Students no longer self-report marks. Redirect to dashboard."""
     if session.get("role") != "student": return redirect(url_for("login"))
-    usn = session.get("user_id")
-
-    if request.method == "POST":
-        sem = request.form.get("semester")
-
-        summ_df = get_df("data/academic_summary.csv")
-        if summ_df.empty: summ_df = pd.DataFrame(columns=['usn','semester','attendance','sgpa','cgpa','activity_points'])
-
-        summ_data = {
-            'usn': usn, 'semester': sem,
-            'attendance': request.form.get("attendance"),
-            'sgpa': request.form.get("sgpa"),
-            'cgpa': request.form.get("cgpa"),
-            'activity_points': request.form.get("activity_points")
-        }
-        summ_df = summ_df[~((summ_df['usn'] == usn) & (summ_df['semester'].astype(str) == str(sem)))]
-        summ_df = pd.concat([summ_df, pd.DataFrame([summ_data])], ignore_index=True)
-        save_df(summ_df, "data/academic_summary.csv")
-
-        marks_df = get_df("data/academic_marks.csv")
-        if marks_df.empty: marks_df = pd.DataFrame(columns=['usn','semester','subject_name','cie','see'])
-        subs = request.form.getlist("subject_name[]")
-        cies = request.form.getlist("cie[]")
-        sees = request.form.getlist("see[]")
-        marks_df = marks_df[~((marks_df['usn'] == usn) & (marks_df['semester'].astype(str) == str(sem)))]
-        new_marks = []
-        for i in range(len(subs)):
-            if subs[i].strip() != "":
-                new_marks.append({'usn': usn, 'semester': sem, 'subject_name': subs[i],
-                                  'cie': cies[i] if cies[i] else 0, 'see': sees[i] if sees[i] else 0})
-        if new_marks:
-            marks_df = pd.concat([marks_df, pd.DataFrame(new_marks)], ignore_index=True)
-        save_df(marks_df, "data/academic_marks.csv")
-        return redirect(url_for("student"))
-
-    return render_template("student_academic_entry.html")
+    flash("Academic marks are now uploaded by your mentor/teacher.")
+    return redirect(url_for("student"))
 
 @app.route("/student/daily_checkin", methods=["GET", "POST"])
 def student_daily_checkin():
@@ -1139,6 +1153,94 @@ def api_student_explanation(usn):
         "trend_data": risk['trend_data'],
         "data_source": risk['data_source']
     })
+
+
+@app.route("/api/whatif_predict")
+def api_whatif_predict():
+    """Live What-If Simulator: Run ML inference with custom feature values."""
+    if session.get("role") not in ["teacher", "admin"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    if _ML_MODEL is None:
+        return jsonify({"error": "No ML model loaded"}), 500
+
+    try:
+        features = {
+            'attendance': float(request.args.get('attendance', 85)),
+            'sgpa': float(request.args.get('sgpa', 7.0)),
+            'avg_stress': float(request.args.get('avg_stress', 3.0)),
+            'missed_days': float(request.args.get('missed_days', 1)),
+            'avg_mood': float(request.args.get('avg_mood', 2.5)),
+            'avg_energy': float(request.args.get('avg_energy', 3.0)),
+            'streak': float(request.args.get('streak', 3))
+        }
+
+        feature_vector = [features.get(f, 0) for f in _ML_FEATURE_NAMES]
+        X = [feature_vector]
+
+        # Main prediction
+        prob = _ML_MODEL.predict_proba(X)[0]
+        raw_dropout_prob = round(min(98, max(2, prob[1] * 100)), 1)
+
+        # Per-tree votes (unique to Random Forest — shows each tree's individual decision)
+        tree_votes = {'safe': 0, 'risk': 0}
+        tree_details = []
+        if hasattr(_ML_MODEL, 'estimators_'):
+            for i, tree in enumerate(_ML_MODEL.estimators_):
+                tree_pred = tree.predict(X)[0]
+                tree_prob = tree.predict_proba(X)[0]
+                vote = 'risk' if tree_pred == 1 else 'safe'
+                tree_votes[vote] += 1
+                if i < 20:  # Send first 20 tree details
+                    tree_details.append({
+                        'id': i + 1,
+                        'vote': vote,
+                        'confidence': round(float(max(tree_prob)) * 100, 1)
+                    })
+
+        # Feature contributions (SHAP-like)
+        shap_values = compute_feature_contributions(features)
+
+        # Feature importance from model
+        importances = {}
+        if hasattr(_ML_MODEL, 'feature_importances_'):
+            for i, fname in enumerate(_ML_FEATURE_NAMES):
+                if i < len(_ML_MODEL.feature_importances_):
+                    importances[fname] = round(float(_ML_MODEL.feature_importances_[i]) * 100, 2)
+
+        # Apply same safety-net calibration as main risk engine
+        att = features['attendance']
+        sgpa = features['sgpa']
+        dropout_prob = raw_dropout_prob
+
+        if att >= 85 and sgpa >= 7.5:
+            dropout_prob = round(dropout_prob * 0.1)
+            dropout_prob = max(1, min(dropout_prob, 4))
+        elif att >= 75 and sgpa >= 6.0:
+            dropout_prob = max(5, min(dropout_prob, 15))
+
+        # Risk classification (based on calibrated probability)
+        if dropout_prob > 60:
+            risk_level = "High"
+        elif dropout_prob > 30:
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+
+        return jsonify({
+            "dropout_probability": dropout_prob,
+            "raw_ml_probability": raw_dropout_prob,
+            "safe_probability": round(100 - dropout_prob, 1),
+            "risk_level": risk_level,
+            "tree_votes": tree_votes,
+            "tree_details": tree_details,
+            "total_trees": len(_ML_MODEL.estimators_) if hasattr(_ML_MODEL, 'estimators_') else 0,
+            "shap_values": shap_values,
+            "feature_importances": importances,
+            "input_features": features
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # ═══════════════════════════════════════════════════════════════
