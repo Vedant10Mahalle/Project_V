@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Academic Marks — {{ student_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .mark-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 15px; margin-bottom: 15px; align-items: center; }
+        .mark-row input { margin: 0; }
+        .del-btn { background: rgba(239, 68, 68, 0.08); color: #dc2626; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; }
+        .del-btn:hover { background: rgba(239, 68, 68, 0.15); }
+        .entry-layout { max-width: 900px; margin: 40px auto; }
+        .back-link { margin-bottom: 24px; display: inline-block; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; }
+        .back-link:hover { color: var(--text-primary); }
+        .student-badge { background: #e0e7ff; color: #4f46e5; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid #c7d2fe; display: inline-block; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="entry-layout">
+    <a href="/teacher/student/{{ student_usn }}" class="back-link">← Back to Student Profile</a>
+
+    <div class="panel" style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 32px; box-shadow: var(--shadow-soft);">
+        <div style="margin-bottom: 24px;">
+            <span class="student-badge">Student: {{ student_name }} ({{ student_usn }})</span>
+            <h2 style="margin: 12px 0 6px 0; font-size: 1.4rem; color: var(--text-primary);">Upload Academic Marks</h2>
+            <p style="color: var(--text-secondary); font-size: 0.95rem; margin: 0;">Enter subject-wise marks and semester performance aggregates for this student.</p>
+        </div>
+
+        <form method="POST" action="/teacher/student/{{ student_usn }}/academic_entry" style="text-align: left;">
+            
+            <div class="form-group" style="margin-bottom: 25px;">
+                <label>Select Semester</label>
+                <select name="semester" required>
+                    <option value="1">Semester 1</option><option value="2">Semester 2</option>
+                    <option value="3">Semester 3</option><option value="4" selected>Semester 4</option>
+                    <option value="5">Semester 5</option><option value="6">Semester 6</option>
+                    <option value="7">Semester 7</option><option value="8">Semester 8</option>
+                </select>
+            </div>
+
+            <h3 class="section-header" style="display: flex; justify-content: space-between; align-items: center; font-size: 1.05rem; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);">
+                Subject Marks
+                <button type="button" class="btn secondary" style="margin:0; padding: 6px 12px; font-size: 0.85rem;" onclick="addSubjectRow()">+ Add Subject</button>
+            </h3>
+            
+            <div style="margin-bottom: 25px;">
+                <div class="mark-row" style="color: var(--text-secondary); font-size: 0.85rem; padding-bottom: 10px; border-bottom: 1px solid var(--border-light);">
+                    <div>Subject Name</div><div>CIE (Out of 50)</div><div>SEE (Out of 100)</div><div>Action</div>
+                </div>
+                
+                <div id="subjectsContainer">
+                    <div class="mark-row">
+                        <input type="text" name="subject_name[]" placeholder="e.g. Data Structures" required>
+                        <input type="number" step="0.1" name="cie[]" placeholder="CIE" required>
+                        <input type="number" step="0.1" name="see[]" placeholder="SEE" required>
+                        <div>&nbsp;</div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="section-header" style="font-size: 1.05rem; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);">Performance Aggregate</h3>
+            <div class="form-grid">
+                <div class="form-group"><label>Total Attendance (%)</label><input type="number" step="0.1" name="attendance" required></div>
+                <div class="form-group"><label>Total Activity Points (Max 50)</label><input type="number" step="1" name="activity_points" required></div>
+                <div class="form-group"><label>Current SGPA</label><input type="number" step="0.01" name="sgpa" required></div>
+                <div class="form-group"><label>Overall CGPA</label><input type="number" step="0.01" name="cgpa" required></div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 30px;">
+                <a href="/teacher/student/{{ student_usn }}" class="btn secondary">Cancel</a>
+                <button type="submit" class="btn">Save Academic Data</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function addSubjectRow() {
+    const container = document.getElementById('subjectsContainer');
+    const row = document.createElement('div');
+    row.className = 'mark-row';
+    row.innerHTML = `
+        <input type="text" name="subject_name[]" placeholder="e.g. Algorithms" required>
+        <input type="number" step="0.1" name="cie[]" placeholder="CIE" required>
+        <input type="number" step="0.1" name="see[]" placeholder="SEE" required>
+        <button type="button" class="del-btn" onclick="this.parentElement.remove()">Remove</button>
+    `;
+    container.appendChild(row);
+}
+</script>
+
+</body>
+</html>

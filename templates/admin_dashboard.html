@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Control Panel — Student Risk Prediction System</title>
+    <link href="https://fonts.googleapis.com/css2family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        :root {
+            --accent: #6366f1;
+            --accent-2: #8b5cf6;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warn: #f59e0b;
+            --text-dim: #94a3b8;
+        }
+
+        /* ── Layout ─────────────────────────────────── */
+        .admin-layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+
+        /* ── Sidebar ─────────────────────────────────── */
+        .sidebar {
+            background: rgba(10, 15, 30, 0.95);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            padding: 30px 0;
+            position: sticky; top: 0; height: 100vh; overflow-y: auto;
+        }
+        .sidebar-logo {
+            padding: 0 24px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            margin-bottom: 20px;
+        }
+        .sidebar-logo h2 { font-family: 'Outfit', sans-serif; font-size: 1.1rem; margin: 0; background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+        .sidebar-logo p { color: var(--text-dim); font-size: 0.78rem; margin: 4px 0 0; }
+        .nav-section-label { padding: 8px 24px; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #475569; font-weight: 600; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 24px; color: #94a3b8; text-decoration: none;
+            font-size: 0.9rem; font-weight: 500; cursor: pointer;
+            border-left: 3px solid transparent; transition: all 0.2s;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: rgba(99,102,241,0.1); color: #a5b4fc;
+            border-left-color: #6366f1;
+        }
+        .nav-item svg { flex-shrink: 0; }
+        .sidebar-footer { padding: 20px 24px 0; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 20px; }
+
+        /* ── Danger Zone ─────────────────────────────── */
+        .danger-zone-section { display: block; }
+        .danger-card {
+            background: rgba(239,68,68,0.05); border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 12px; padding: 18px 22px;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px; transition: background 0.2s, border-color 0.2s;
+        }
+        .danger-card:hover { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); }
+        .danger-card-info h4 { margin: 0 0 4px; color: #fca5a5; font-size: 0.95rem; }
+        .danger-card-info p { margin: 0; color: #94a3b8; font-size: 0.82rem; }
+        .btn-clear { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); padding: 8px 18px; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.85rem; font-family: 'Inter', sans-serif; transition: all 0.2s; white-space: nowrap; }
+        .btn-clear:hover { background: rgba(239,68,68,0.3); }
+        .nuke-box { background: rgba(239,68,68,0.08); border: 2px solid rgba(239,68,68,0.4); border-radius: 16px; padding: 30px; text-align: center; margin-top: 30px; }
+        .nuke-box h3 { color: #ef4444; font-family: 'Outfit', sans-serif; margin: 0 0 8px; font-size: 1.3rem; }
+        .nuke-box p { color: #94a3b8; margin: 0 0 20px; font-size: 0.9rem; }
+        .btn-nuke { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; border: none; padding: 13px 32px; border-radius: 9px; cursor: pointer; font-weight: 700; font-size: 1rem; font-family: 'Outfit', sans-serif; letter-spacing: 0.03em; transition: opacity 0.2s; }
+        .btn-nuke:hover { opacity: 0.85; }
+        /* ── Confirm modal ───────────────────────────── */
+        .confirm-input { width: 100%; background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 10px 14px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.95rem; box-sizing: border-box; outline: none; text-align: center; letter-spacing: 0.06em; margin-top: 14px; }
+        .confirm-input:focus { border-color: #ef4444; }
+        .btn-confirm-delete { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 700; opacity: 0.4; transition: opacity 0.2s; }
+        .btn-confirm-delete.ready { opacity: 1; }
+
+        /* ── Main Content ─────────────────────────────── */
+        .main-content { padding: 40px; overflow-y: auto; }
+        .page-header { margin-bottom: 35px; }
+        .page-header h1 { font-family: 'Outfit', sans-serif; font-size: 2rem; margin: 0 0 6px; }
+        .page-header p { color: var(--text-dim); margin: 0; font-size: 0.95rem; }
+
+        /* ── Stats Cards ─────────────────────────────── */
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        .stat-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 16px; padding: 24px;
+            position: relative; overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,0.3); }
+        .stat-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+        .stat-card.teachers::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+        .stat-card.students::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+        .stat-card.parents::before { background: linear-gradient(90deg, #10b981, #059669); }
+        .stat-icon {
+            width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+        }
+        .stat-card.teachers .stat-icon { background: rgba(99,102,241,0.15); }
+        .stat-card.students .stat-icon { background: rgba(59,130,246,0.15); }
+        .stat-card.parents .stat-icon { background: rgba(16,185,129,0.15); }
+        .stat-number { font-family: 'Outfit', sans-serif; font-size: 2.4rem; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+        .stat-card.teachers .stat-number { color: #a5b4fc; }
+        .stat-card.students .stat-number { color: #60a5fa; }
+        .stat-card.parents .stat-number { color: #34d399; }
+        .stat-label { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* ── Section Tabs ─────────────────────────────── */
+        .section { display: none; }
+        .section.active { display: block; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .section-header h2 { font-family: 'Outfit', sans-serif; font-size: 1.4rem; margin: 0; }
+
+        /* ── Admin Table ─────────────────────────────── */
+        .admin-table-wrap { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; overflow: hidden; }
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { padding: 14px 20px; text-align: left; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: #475569; font-weight: 600; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .admin-table td { padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.04); color: #cbd5e1; font-size: 0.9rem; }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        /* ── Badges ──────────────────────────────────── */
+        .role-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .role-badge.teacher { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+        .role-badge.student { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .role-badge.parent { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+        .role-badge.danger { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+        .role-badge.warning { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+        .role-badge.success { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+
+        /* ── Action Buttons ──────────────────────────── */
+        .btn-sm { padding: 6px 14px; font-size: 0.8rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 500; text-decoration: none; display: inline-block; transition: all 0.2s; }
+        .btn-edit { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.25); }
+        .btn-edit:hover { background: rgba(59,130,246,0.3); }
+        .btn-danger { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .btn-danger:hover { background: rgba(239,68,68,0.25); }
+        .btn-add { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; padding: 10px 22px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: opacity 0.2s; }
+        .btn-add:hover { opacity: 0.9; }
+
+        /* ── Modal ──────────────────────────────────── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: #0f172a; border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px; padding: 36px; width: 100%; max-width: 480px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: slideUp 0.25s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal h3 { font-family: 'Outfit', sans-serif; margin: 0 0 24px; font-size: 1.3rem; }
+        .modal .form-group { margin-bottom: 18px; }
+        .modal label { display: block; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 7px; font-weight: 500; }
+        .modal input, .modal select {
+            width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #f8fafc; padding: 10px 14px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.9rem;
+            box-sizing: border-box; outline: none; transition: border-color 0.2s;
+        }
+        .modal input:focus, .modal select:focus { border-color: #6366f1; }
+        .modal select option { background: #0f172a; }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+        .btn-cancel { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+        .btn-save { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; }
+
+        /* ── Flash ──────────────────────────────────── */
+        .flash-msg { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: #34d399; padding: 12px 18px; border-radius: 10px; margin-bottom: 24px; font-size: 0.9rem; }
+        .flash-msg.error { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.2); color: #f87171; }
+
+        /* ── Search bar ──────────────────────────────── */
+        .search-bar { background: rgba(15,23,42,0.5); border: 1px solid rgba(255,255,255,0.1); color: #f8fafc; padding: 9px 16px; border-radius: 8px; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; width: 220px; }
+        .search-bar:focus { border-color: #6366f1; }
+
+        /* ── Empty state ─────────────────────────────── */
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
+        .empty-state svg { margin-bottom: 14px; opacity: 0.4; }
+    </style>
+</head>
+<body>
+
+<div class="admin-layout">
+
+    <!-- ── SIDEBAR ───────────────────────────────────── -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <h2> Admin Panel</h2>
+            <p>Student Risk Prediction System</p>
+        </div>
+
+        <div class="nav-section-label">Overview</div>
+        <a class="nav-item active" onclick="showSection('overview')" id="nav-overview">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Dashboard
+        </a>
+
+        <div class="nav-section-label">Manage</div>
+        <a class="nav-item" onclick="showSection('teachers')" id="nav-teachers">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Teachers
+        </a>
+        <a class="nav-item" onclick="showSection('students')" id="nav-students">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            Students
+        </a>
+        <a class="nav-item" onclick="showSection('parents')" id="nav-parents">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            Parents
+        </a>
+
+        <div class="nav-section-label" style="margin-top:10px;">Danger</div>
+        <a class="nav-item" onclick="showSection('danger')" id="nav-danger" style="color:#f87171">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Danger Zone
+        </a>
+
+        <div class="sidebar-footer">
+            <a href="/logout" class="nav-item" style="border-radius: 8px; color: #f87171; margin: 0; padding: 10px 0;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+            </a>
+        </div>
+    </aside>
+
+    <!-- ── MAIN ───────────────────────────────────────── -->
+    <main class="main-content">
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for cat, msg in messages %}
+              <div class="flash-msg {% if cat == 'error' %}error{% endif %}">{{ msg }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- ── OVERVIEW ──────────────────────────────── -->
+        <section class="section active" id="section-overview">
+            <div class="page-header">
+                <h1>Welcome, {{ admin_name }} </h1>
+                <p>Here's a live snapshot of the system.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card teachers" onclick="showSection('teachers')" style="cursor:pointer">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" fill="none" stroke="#a5b4fc" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <div class="stat-number">{{ teachers|length }}</div>
+                    <div class="stat-label">Faculty Registered</div>
+                </div>
+                <div class="stat-card students" onclick="showSection('students')" style="cursor:pointer">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" fill="none" stroke="#60a5fa" stroke-width="2" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    </div>
+                    <div class="stat-number">{{ students|length }}</div>
+                    <div class="stat-label">Students Enrolled</div>
+                </div>
+                <div class="stat-card parents" onclick="showSection('parents')" style="cursor:pointer">
+                    <div class="stat-icon">
+                        <svg width="22" height="22" fill="none" stroke="#34d399" stroke-width="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                    </div>
+                    <div class="stat-number">{{ parents|length }}</div>
+                </div>
+            </div>
+
+            <!-- AI Inference Status Panel -->
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 16px; padding: 25px; margin-bottom: 30px; position: relative; overflow: hidden; box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.1);">
+                <div style="position: absolute; top: -50%; left: -10%; width: 50%; height: 200%; background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);"></div>
+                <div style="position: relative; z-index: 1;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
+                        <h3 style="margin: 0; color: #f8fafc; font-family: 'Outfit', sans-serif; font-size: 1.4rem;">Machine Learning Inference Engine</h3>
+                        {% if ml_status.active %}
+                            <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Active Model</span>
+                        {% else %}
+                            <span style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">System Fallback Logic</span>
+                        {% endif %}
+                    </div>
+                    <p style="margin: 0 0 20px 0; color: var(--text-secondary); font-size: 0.95rem; max-width: 800px; line-height: 1.5;">The system is actively using the <strong>{{ ml_status.algorithm }}</strong> via the `scikit-learn` pipeline to evaluate multi-factor check-in data and generate realtime Dropout Probabilities with SHAP inference.</p>
+                    
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 8px;">
+                            <div style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Data Features Processed</div>
+                            <div style="color: #f8fafc; font-size: 0.95rem; font-weight: 500; font-family: monospace;">
+                                {{ ml_status.features|join(' | ') }}
+                            </div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px 18px; border-radius: 8px;">
+                            <div style="color: #64748b; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Sub-Model Hyperparameters</div>
+                            <div style="color: #f8fafc; font-size: 0.95rem; font-weight: 500;">{{ ml_status.trees }} Decision Trees / Depth {{ ml_status.max_depth }}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; max-width: 800px;">
+                        <div>
+                            <h4 style="margin: 0 0 4px; color: #f8fafc; font-size: 1rem;">Global Risk Engine Control</h4>
+                            <p style="margin: 0; color: #94a3b8; font-size: 0.85rem;">Export raw system intelligence or force live predictive retraining directly on current student features.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <a href="/admin/export_training_data" class="btn-add" style="background: rgba(255, 255, 255, 0.1); color: #e2e8f0; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; font-size: 0.85rem; text-decoration: none;">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Export Dataset
+                            </a>
+                            <form method="POST" action="/admin/retrain_global_model" style="margin:0;" onsubmit="return confirm('Retrain global inference engine using current live data');">
+                                <button type="submit" class="btn-add" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 8px 16px; font-size: 0.85rem; cursor: pointer;">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21v-5h5"/></svg>
+                                    Live Retrain
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; max-width: 800px;">
+                        <div>
+                            <h4 style="margin: 0 0 4px; color: #f8fafc; font-size: 1rem;">Subject Performance Sub-Model</h4>
+                            <p style="margin: 0; color: #94a3b8; font-size: 0.85rem;">Dynamically learn Pass/Fail bounds by appending Academic Marks directly.</p>
+                        </div>
+                        <button class="btn-add" onclick="openModal('modal-train-subject')" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 16px; font-size: 0.85rem;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            Upload CSV to Retrain
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick overview tables side by side -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div class="admin-table-wrap">
+                    <div style="padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: #e2e8f0;">Recent Teachers</span>
+                        <a onclick="showSection('teachers')" class="btn-sm btn-edit" style="cursor:pointer">View all</a>
+                    </div>
+                    <table class="admin-table">
+                        <tr><th>ID</th><th>Name</th><th>Dept</th></tr>
+                        {% for t in teachers[:5] %}
+                        <tr>
+                            <td><code style="color:#94a3b8;font-size:0.8rem">{{ t.teacher_id }}</code></td>
+                            <td>{{ t.name }}</td>
+                            <td style="color:#94a3b8;font-size:0.85rem">{{ t.department }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="empty-state">No teachers yet</td></tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                <div class="admin-table-wrap">
+                    <div style="padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: #e2e8f0;">Recent Students</span>
+                        <a onclick="showSection('students')" class="btn-sm btn-edit" style="cursor:pointer">View all</a>
+                    </div>
+                    <table class="admin-table">
+                        <tr><th>USN</th><th>Name</th><th>Branch</th></tr>
+                        {% for s in students[:5] %}
+                        <tr>
+                            <td><code style="color:#94a3b8;font-size:0.8rem">{{ s.usn }}</code></td>
+                            <td>{{ s.name }}</td>
+                            <td style="color:#94a3b8;font-size:0.85rem">{{ s.branch }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="empty-state">No students yet</td></tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── TEACHERS ──────────────────────────────── -->
+        <section class="section" id="section-teachers">
+            <div class="page-header">
+                <h1>Manage Faculty</h1>
+                <p>Add, edit, or remove teacher accounts.</p>
+            </div>
+            <div class="section-header">
+                <input class="search-bar" placeholder="  Search by name or ID…" oninput="filterTable('teacher-table', this.value)">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-add" onclick="openModal('modal-upload-teachers')" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Bulk Upload
+                    </button>
+                    <button class="btn-add" onclick="openModal('modal-add-teacher')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Teacher
+                    </button>
+                </div>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="teacher-table">
+                    <tr><th>Teacher ID</th><th>Name</th><th>Department</th><th>Students Assigned</th><th>Actions</th></tr>
+                    {% for t in teachers %}
+                    <tr>
+                        <td><code style="color:#a5b4fc;font-size:0.85rem">{{ t.teacher_id }}</code></td>
+                        <td style="font-weight:500;color:#e2e8f0">{{ t.name }}</td>
+                        <td style="color:var(--text-dim)">{{ t.department }}</td>
+                        <td>
+                            <span style="color:#60a5fa;font-weight:600">
+                                {{ students | selectattr('mentor_id', 'equalto', t.teacher_id) | list | length }}
+                            </span>
+                        </td>
+                        <td style="display:flex;gap:8px;align-items:center">
+                            <button class="btn-sm btn-edit" onclick="openEditTeacher('{{ t.teacher_id }}', '{{ t.name }}', '{{ t.department }}')">Edit</button>
+                            <form method="POST" action="/admin/teachers/delete/{{ t.teacher_id }}" onsubmit="return confirm('Delete {{ t.name }} Their students will lose their mentor assignment.');" style="display:inline">
+                                <button type="submit" class="btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5"><div class="empty-state">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                        <p>No teachers found. Add one above.</p>
+                    </div></td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </section>
+
+        <!-- ── STUDENTS ──────────────────────────────── -->
+        <section class="section" id="section-students">
+            <div class="page-header">
+                <h1>Manage Students</h1>
+                <p>View, add, edit, or remove student records.</p>
+            </div>
+            <div class="section-header">
+                <input class="search-bar" placeholder="  Search by name or USN…" oninput="filterTable('student-table', this.value)">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-add" onclick="openModal('modal-upload-students')" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Bulk Upload
+                    </button>
+                    <button class="btn-add" onclick="openModal('modal-add-student')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Student
+                    </button>
+                </div>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="student-table">
+                    <tr><th>USN</th><th>Name</th><th>Branch</th><th>Semester</th><th>Mentor</th><th>ML Risk</th><th>Actions</th></tr>
+                    {% for s in students %}
+                    <tr>
+                        <td><code style="color:#60a5fa;font-size:0.85rem">{{ s.usn }}</code></td>
+                        <td style="font-weight:500;color:#e2e8f0">{{ s.name }}</td>
+                        <td style="color:var(--text-dim)">{{ s.branch }}</td>
+                        <td style="color:var(--text-dim)">Sem {{ s.semester }}</td>
+                        <td>
+                            {% if s.mentor_id and s.mentor_id|string|trim != '' %}
+                                <code style="color:#a5b4fc;font-size:0.82rem">{{ s.mentor_id }}</code>
+                            {% else %}
+                                <span style="color:#ef4444;font-size:0.82rem">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="role-badge {% if s.risk_level == 'High' %}danger{% elif s.risk_level == 'Medium' %}warning{% else %}success{% endif %}">
+                                {{ s.risk_level }} (Dropout Prob: {{ s.dropout_prob }}%)
+                            </span>
+                        </td>
+                        <td style="display:flex;gap:8px;align-items:center">
+                            {% set m_id = s.mentor_id if s.mentor_id else '' %}
+                            <button class="btn-sm btn-edit" onclick="openEditStudent('{{ s.usn }}', '{{ s.name }}', '{{ s.branch }}', '{{ s.semester }}', '{{ m_id }}')">Edit</button>
+                            <form method="POST" action="/admin/students/delete/{{ s.usn }}" onsubmit="return confirm('Delete student {{ s.usn }} All their academic data remains in the system.');" style="display:inline">
+                                <button type="submit" class="btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6"><div class="empty-state">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/></svg>
+                        <p>No students found. Add one above.</p>
+                    </div></td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </section>
+
+        <!-- ── PARENTS ──────────────────────────────── -->
+        <section class="section" id="section-parents">
+            <div class="page-header">
+                <h1>Manage Parents</h1>
+                <p>Link parent accounts to students.</p>
+            </div>
+            <div class="section-header">
+                <input class="search-bar" placeholder="  Search by name or ID…" oninput="filterTable('parent-table', this.value)">
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-add" onclick="openModal('modal-upload-parents')" style="background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3);">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Bulk Upload
+                    </button>
+                    <button class="btn-add" onclick="openModal('modal-add-parent')">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add Parent
+                    </button>
+                </div>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table" id="parent-table">
+                    <tr><th>Parent ID</th><th>Name</th><th>Linked USN</th><th>Student Name</th><th>Actions</th></tr>
+                    {% for p in parents %}
+                    {% set linked = students | selectattr('usn', 'equalto', p.usn) | list %}
+                    <tr>
+                        <td><code style="color:#34d399;font-size:0.85rem">{{ p.parent_id }}</code></td>
+                        <td style="font-weight:500;color:#e2e8f0">{{ p.name }}</td>
+                        <td><code style="color:#60a5fa;font-size:0.82rem">{{ p.usn }}</code></td>
+                        <td style="color:var(--text-dim)">{{ linked[0].name if linked else '—' }}</td>
+                        <td>
+                            <form method="POST" action="/admin/parents/delete/{{ p.parent_id }}" onsubmit="return confirm('Delete parent account {{ p.parent_id }}');" style="display:inline">
+                                <button type="submit" class="btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5"><div class="empty-state">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        <p>No parents found. Add one above.</p>
+                    </div></td></tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </section>
+
+        <!-- ── DANGER ZONE ──────────────────────────── -->
+        <section class="section" id="section-danger">
+            <div class="page-header">
+                <h1 style="color:#ef4444;"> Danger Zone</h1>
+                <p>Irreversible actions. All deletions are immediate and permanent.</p>
+            </div>
+
+            <h3 style="color:#e2e8f0;font-family:'Outfit',sans-serif;margin:0 0 16px;font-size:1.1rem;">Clear Individual Datasets</h3>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>Weekly Feedback Logs</h4>
+                    <p>Removes all student weekly check-in submissions.</p>
+                </div>
+                <form method="POST" action="/admin/clear/weekly_feedback"><button type="submit" class="btn-clear" onclick="return confirm('Clear ALL weekly feedback This cannot be undone.')">Clear</button></form>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>Academic Marks</h4>
+                    <p>Removes all subject-level CIE / SEE mark entries.</p>
+                </div>
+                <form method="POST" action="/admin/clear/academic_marks"><button type="submit" class="btn-clear" onclick="return confirm('Clear ALL academic marks This cannot be undone.')">Clear</button></form>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>Academic Summaries</h4>
+                    <p>Removes all per-semester SGPA / CGPA / attendance summaries.</p>
+                </div>
+                <form method="POST" action="/admin/clear/academic_summary"><button type="submit" class="btn-clear" onclick="return confirm('Clear ALL academic summaries This cannot be undone.')">Clear</button></form>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>Meeting Requests</h4>
+                    <p>Removes all pending and resolved parent-teacher meeting requests.</p>
+                </div>
+                <form method="POST" action="/admin/clear/meeting_requests"><button type="submit" class="btn-clear" onclick="return confirm('Clear ALL meeting requests')">Clear</button></form>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>Notifications</h4>
+                    <p>Resets all teacher notification flags.</p>
+                </div>
+                <form method="POST" action="/admin/clear/notifications"><button type="submit" class="btn-clear" onclick="return confirm('Clear ALL notifications')">Clear</button></form>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>All Students</h4>
+                    <p>Permanently removes every student account from the system.</p>
+                </div>
+                <button class="btn-clear" onclick="openConfirm('clear-students', '/admin/clear/students', 'DELETE STUDENTS')">Clear</button>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>All Teachers</h4>
+                    <p>Permanently removes every teacher account. Students lose mentor links.</p>
+                </div>
+                <button class="btn-clear" onclick="openConfirm('clear-teachers', '/admin/clear/teachers', 'DELETE TEACHERS')">Clear</button>
+            </div>
+
+            <div class="danger-card">
+                <div class="danger-card-info">
+                    <h4>All Parents</h4>
+                    <p>Permanently removes every parent account.</p>
+                </div>
+                <button class="btn-clear" onclick="openConfirm('clear-parents', '/admin/clear/parents', 'DELETE PARENTS')">Clear</button>
+            </div>
+
+            <!-- Nuclear option -->
+            <div class="nuke-box">
+                <h3> Wipe Everything</h3>
+                <p>Deletes <strong style="color:#fca5a5;">all students, teachers, parents</strong> and <strong style="color:#fca5a5;">all data</strong> (marks, feedback, meetings, notifications).<br>The admin account is preserved.</p>
+                <button class="btn-nuke" onclick="openConfirm('nuke', '/admin/clear/everything', 'WIPE EVERYTHING')">Wipe All Data</button>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- ═══════════════════ MODALS ════════════════════ -->
+
+<!-- Add Teacher -->
+<div class="modal-overlay" id="modal-add-teacher">
+    <div class="modal">
+        <h3> Add New Teacher</h3>
+        <form method="POST" action="/admin/teachers/add">
+            <div class="form-group">
+                <label>Faculty ID (e.g. T003)</label>
+                <input type="text" name="teacher_id" placeholder="T003" required>
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="Dr. Jane Smith" required>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" placeholder="Computer Science" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Set initial password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-add-teacher')">Cancel</button>
+                <button type="submit" class="btn-save">Add Teacher</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Teacher -->
+<div class="modal-overlay" id="modal-edit-teacher">
+    <div class="modal">
+        <h3> Edit Teacher</h3>
+        <form method="POST" action="/admin/teachers/edit/__ID__" id="edit-teacher-form">
+            <div class="form-group">
+                <label>Faculty ID</label>
+                <input type="text" id="et-id" readonly style="opacity:0.5;cursor:not-allowed">
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" id="et-name" required>
+            </div>
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" id="et-dept" required>
+            </div>
+            <div class="form-group">
+                <label>New Password <span style="color:#475569;font-weight:400">(leave blank to keep existing)</span></label>
+                <input type="password" name="password" placeholder="••••••••">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-teacher')">Cancel</button>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Student -->
+<div class="modal-overlay" id="modal-add-student">
+    <div class="modal">
+        <h3> Add New Student</h3>
+        <form method="POST" action="/admin/students/add">
+            <div class="form-group">
+                <label>USN</label>
+                <input type="text" name="usn" placeholder="NNM24RI001" required>
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" placeholder="Student Name" required>
+            </div>
+            <div class="form-group">
+                <label>Branch</label>
+                <input type="text" name="branch" placeholder="Robotics and AI" required>
+            </div>
+            <div class="form-group">
+                <label>Semester</label>
+                <select name="semester">
+                    {% for i in range(1, 9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assign Mentor</label>
+                <select name="mentor_id">
+                    <option value="">— No Mentor Yet —</option>
+                    {% for t in teachers %}<option value="{{ t.teacher_id }}">{{ t.teacher_id }} – {{ t.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Set initial password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-add-student')">Cancel</button>
+                <button type="submit" class="btn-save">Add Student</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Student -->
+<div class="modal-overlay" id="modal-edit-student">
+    <div class="modal">
+        <h3> Edit Student</h3>
+        <form method="POST" action="/admin/students/edit/__USN__" id="edit-student-form">
+            <div class="form-group">
+                <label>USN</label>
+                <input type="text" id="es-usn" readonly style="opacity:0.5;cursor:not-allowed">
+            </div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="name" id="es-name" required>
+            </div>
+            <div class="form-group">
+                <label>Branch</label>
+                <input type="text" name="branch" id="es-branch" required>
+            </div>
+            <div class="form-group">
+                <label>Semester</label>
+                <select name="semester" id="es-sem">
+                    {% for i in range(1, 9) %}<option value="{{ i }}">Semester {{ i }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Assign Mentor</label>
+                <select name="mentor_id" id="es-mentor">
+                    <option value="">— No Mentor —</option>
+                    {% for t in teachers %}<option value="{{ t.teacher_id }}">{{ t.teacher_id }} – {{ t.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>New Password <span style="color:#475569;font-weight:400">(leave blank to keep existing)</span></label>
+                <input type="password" name="password" placeholder="••••••••">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-edit-student')">Cancel</button>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Parent -->
+<div class="modal-overlay" id="modal-add-parent">
+    <div class="modal">
+        <h3> Add Parent Account</h3>
+        <form method="POST" action="/admin/parents/add">
+            <div class="form-group">
+                <label>Parent ID (e.g. P010)</label>
+                <input type="text" name="parent_id" placeholder="P010" required>
+            </div>
+            <div class="form-group">
+                <label>Parent's Full Name</label>
+                <input type="text" name="name" placeholder="Parent Name" required>
+            </div>
+            <div class="form-group">
+                <label>Linked Student USN</label>
+                <select name="usn" required>
+                    <option value="">— Select Student —</option>
+                    {% for s in students %}<option value="{{ s.usn }}">{{ s.usn }} – {{ s.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="Set initial password" required>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-add-parent')">Cancel</button>
+                <button type="submit" class="btn-save">Add Parent</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- DANGER CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+    <div class="modal" style="text-align:center">
+        <h3 id="confirm-title" style="color:#ef4444;margin-bottom:12px"> Are you sure</h3>
+        <p style="color:#94a3b8;font-size:0.9rem;margin-bottom:20px" id="confirm-desc">This action is irreversible.</p>
+        <p style="color:#f8fafc;font-size:0.85rem;margin-bottom:8px">Type <strong id="confirm-match-text" style="color:#fca5a5;user-select:none"></strong> to confirm.</p>
+        <form method="POST" action="" id="confirm-form">
+            <input type="text" class="confirm-input" id="confirm-input" placeholder="Type here..." autocomplete="off">
+            <div class="modal-actions" style="justify-content:center;margin-top:24px">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-confirm')">Cancel</button>
+                <button type="submit" class="btn-confirm-delete" id="btn-confirm" disabled>Confirm Action</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload Teachers Modal -->
+<div class="modal-overlay" id="modal-upload-teachers">
+    <div class="modal">
+        <h3> Upload Teachers CSV</h3>
+        <form method="POST" action="/admin/upload/teachers" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Target Department <span style="font-weight:400;color:#94a3b8">(Applied to all uploaded rows)</span></label>
+                <input type="text" name="department" placeholder="e.g. Computer Science" required>
+            </div>
+            <div class="form-group">
+                <label>CSV File</label>
+                <input type="file" name="file" accept=".csv" required style="border:1px dashed rgba(255,255,255,0.2);padding:15px;border-radius:8px;background:rgba(255,255,255,0.02)">
+                <small style="color:#94a3b8;display:block;margin-top:8px">Required headers: <code style="color:#60a5fa">teacher_id</code>, <code style="color:#60a5fa">name</code></small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-upload-teachers')">Cancel</button>
+                <button type="submit" class="btn-save">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload Students Modal -->
+<div class="modal-overlay" id="modal-upload-students">
+    <div class="modal">
+        <h3> Upload Students CSV</h3>
+        <form method="POST" action="/admin/upload/students" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Target Branch <span style="font-weight:400;color:#94a3b8">(Applied to all uploaded rows)</span></label>
+                <input type="text" name="branch" placeholder="e.g. Electrical Engineering" required>
+            </div>
+            <div class="form-group">
+                <label>CSV File</label>
+                <input type="file" name="file" accept=".csv" required style="border:1px dashed rgba(255,255,255,0.2);padding:15px;border-radius:8px;background:rgba(255,255,255,0.02)">
+                <small style="color:#94a3b8;display:block;margin-top:8px">Required headers: <code style="color:#60a5fa">usn</code>, <code style="color:#60a5fa">name</code>, <code style="color:#60a5fa">semester</code> (optional)</small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-upload-students')">Cancel</button>
+                <button type="submit" class="btn-save">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload Parents Modal -->
+<div class="modal-overlay" id="modal-upload-parents">
+    <div class="modal">
+        <h3> Upload Parents CSV</h3>
+        <form method="POST" action="/admin/upload/parents" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>CSV File</label>
+                <input type="file" name="file" accept=".csv" required style="border:1px dashed rgba(255,255,255,0.2);padding:15px;border-radius:8px;background:rgba(255,255,255,0.02)">
+                <small style="color:#94a3b8;display:block;margin-top:8px">Required headers: <code style="color:#60a5fa">parent_id</code>, <code style="color:#60a5fa">name</code>, <code style="color:#60a5fa">usn</code> (Linked Student)</small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-upload-parents')">Cancel</button>
+                <button type="submit" class="btn-save">Upload</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Upload & Train Subject Model Modal -->
+<div class="modal-overlay" id="modal-train-subject">
+    <div class="modal">
+        <h3> Upload Academic Marks & Retrain</h3>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px; line-height: 1.5;">This will <strong style="color: #e2e8f0;">append</strong> the CSV data onto the existing dataset and force the Machine Learning engine to recursively train and analyze the new parameters dynamically.</p>
+        <form method="POST" action="/admin/train_model" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>CSV File (Marks Data)</label>
+                <input type="file" name="file" accept=".csv" required style="border:1px dashed rgba(255,255,255,0.2);padding:15px;border-radius:8px;background:rgba(255,255,255,0.02)">
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal('modal-train-subject')">Cancel</button>
+                <button type="submit" class="btn-save" style="background: linear-gradient(135deg, #059669, #10b981);">Append & Retrain</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ── Navigation ───────────────────────────────────────────────
+const sections = ['overview', 'teachers', 'students', 'parents', 'danger'];
+function showSection(id) {
+    sections.forEach(s => {
+        document.getElementById('section-' + s).classList.remove('active');
+        document.getElementById('nav-' + s).classList.remove('active');
+    });
+    document.getElementById('section-' + id).classList.add('active');
+    document.getElementById('nav-' + id).classList.add('active');
+}
+
+// ── Modals ───────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+});
+
+// ── Edit Teacher ─────────────────────────────────────────────
+function openEditTeacher(id, name, dept) {
+    document.getElementById('et-id').value = id;
+    document.getElementById('et-name').value = name;
+    document.getElementById('et-dept').value = dept;
+    document.getElementById('edit-teacher-form').action = '/admin/teachers/edit/' + id;
+    openModal('modal-edit-teacher');
+}
+
+// ── Edit Student ────────────────────────────────────────────
+function openEditStudent(usn, name, branch, sem, mentor) {
+    document.getElementById('es-usn').value = usn;
+    document.getElementById('es-name').value = name;
+    document.getElementById('es-branch').value = branch;
+    document.getElementById('es-sem').value = sem;
+    document.getElementById('es-mentor').value = mentor;
+    document.getElementById('edit-student-form').action = '/admin/students/edit/' + usn;
+    openModal('modal-edit-student');
+}
+
+// ── Table Search Filter ───────────────────────────────────────
+function filterTable(tableId, query) {
+    const q = query.toLowerCase();
+    document.querySelectorAll('#' + tableId + ' tr:not(:first-child)').forEach(row => {
+        row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
+
+// ── Danger Confirmation ──────────────────────────────────────
+const confirmInput = document.getElementById('confirm-input');
+const btnConfirm = document.getElementById('btn-confirm');
+let currentMatchText = '';
+
+function openConfirm(id, actionUrl, matchText) {
+    document.getElementById('confirm-form').action = actionUrl;
+    document.getElementById('confirm-match-text').innerText = matchText;
+    currentMatchText = matchText;
+    confirmInput.value = '';
+    btnConfirm.disabled = true;
+    btnConfirm.classList.remove('ready');
+    openModal('modal-confirm');
+    setTimeout(() => confirmInput.focus(), 100);
+}
+
+if (confirmInput) {
+    confirmInput.addEventListener('input', (e) => {
+        if (e.target.value === currentMatchText) {
+            btnConfirm.disabled = false;
+            btnConfirm.classList.add('ready');
+        } else {
+            btnConfirm.disabled = true;
+            btnConfirm.classList.remove('ready');
+        }
+    });
+}
+
+// ── Auto-open section from URL hash ─────────────────────────
+const hash = window.location.hash.replace('#', '');
+if (sections.includes(hash)) showSection(hash);
+</script>
+
+</body>
+</html>

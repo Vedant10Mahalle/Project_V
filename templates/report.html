@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Report — {{ student.name }}</title>
+    <link href="https://fonts.googleapis.com/css2family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        @media print {
+            body { background: white !important; color: #1e293b !important; }
+            .glass-container { box-shadow: none; border: 1px solid #e2e8f0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="glass-container large" style="max-width: 860px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--border-subtle);">
+        <div>
+            <div style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Formal Student Dossier</div>
+            <h2 style="margin:4px 0 0; font-size:1.6rem;">{{ student.name }}</h2>
+            <div style="color:var(--text-secondary); font-family:monospace;">{{ student.usn }} · {{ student.branch }}</div>
+        </div>
+        <div class="no-print" style="display:flex; gap:10px;">
+            <button onclick="window.print()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem;"> Print</button>
+            <a href="javascript:history.back()" class="btn secondary" style="margin:0; padding:8px 16px; font-size:0.9rem; text-decoration:none;">← Back</a>
+        </div>
+    </div>
+
+    <!-- Risk Summary -->
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;">
+        <div class="stat-card">
+            <div class="stat-value {% if risk.dropout_prob > 60 %}text-danger{% elif risk.dropout_prob > 35 %}text-warning{% else %}text-success{% endif %}">{{ risk.dropout_prob }}%</div>
+            <div class="stat-label">Support Need %</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-family:'Outfit'; font-size:1.4rem; font-weight:800; margin-bottom:6px;">
+                <span class="badge {% if risk.academic_risk=='High'%}danger{% elif risk.academic_risk=='Medium'%}warning{% else %}success{% endif %}">{{ risk.academic_risk }}</span>
+            </div>
+            <div class="stat-label">Academic Risk</div>
+        </div>
+        <div class="stat-card">
+            <div style="font-family:'Outfit'; font-size:1.4rem; font-weight:800; margin-bottom:6px;">
+                <span class="badge {% if risk.behavioral_risk=='High'%}danger{% elif risk.behavioral_risk=='Medium'%}warning{% else %}success{% endif %}">{{ risk.behavioral_risk }}</span>
+            </div>
+            <div class="stat-label">Behavioral Risk</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ student.attendance|default('0') }}%</div>
+            <div class="stat-label">Attendance</div>
+        </div>
+    </div>
+
+    <!-- Explainability -->
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;">🧠 Assessment — Key Influencing Factors</h3>
+        <ul style="color:#cbd5e1; font-size:0.92rem; line-height:1.8; padding-left:20px; margin:0;">
+            {% for r in risk.reasons %}
+            <li>{{ r }}</li>
+            {% endfor %}
+        </ul>
+        <div style="margin-top:12px; font-size:0.78rem; color:var(--text-muted);">
+            Computed System Tracking · Confidence Score: {{ (risk.confidence * 100)|round }}%
+        </div>
+    </div>
+
+    <!-- Academic Metrics -->
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;"> Academic Summary</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">SGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.sgpa|default('N/A') }}</div></div>
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">CGPA</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-blue);">{{ student.cgpa|default('N/A') }}</div></div>
+            <div><span style="color:var(--text-secondary); font-size:0.82rem;">Activity Points</span><div style="font-size:1.5rem; font-weight:700; color:var(--accent-green);">{{ student.activity_points|default('0') }}/50</div></div>
+        </div>
+    </div>
+
+    <!-- Weekly History -->
+    {% if history and history|length > 0 %}
+    <div class="profile-section">
+        <h3 style="margin:0 0 14px; font-size:1.05rem;"> Behavioral History</h3>
+        <table class="data-table">
+            <tr><th>Week</th><th>Stress (1-10)</th><th>Academic Issues</th><th>Need Help</th></tr>
+            {% for h in history %}
+            <tr>
+                <td>Week {{ h.week }}</td>
+                <td class="{% if h.stress|int >= 7 %}text-danger{% elif h.stress|int >= 4 %}text-warning{% else %}text-success{% endif %}">{{ h.stress }}</td>
+                <td class="{% if h.academic_issues|lower == 'yes' %}text-danger{% else %}text-success{% endif %}">{{ h.academic_issues }}</td>
+                <td class="{% if h.need_help|lower == 'yes' %}text-danger{% else %}text-success{% endif %}">{{ h.need_help|default('No') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
+    <div style="text-align:center; color:var(--text-muted); font-size:0.78rem; margin-top:16px;">
+        Generated: {{ now if now else 'N/A' }} · Intelligent Student Monitoring System v2.0
+    </div>
+</div>
+</body>
+</html>

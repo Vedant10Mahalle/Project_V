@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project V — Student Portal</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .welcome-header { margin-bottom: 24px; }
+        .welcome-header h2 { font-size: 1.8rem; margin: 0 0 4px 0; color: var(--text-primary); }
+        .welcome-header p { font-size: 1rem; color: var(--text-secondary); margin: 0; }
+        
+        .insight-card {
+            background: #f1f5f9;
+            border-radius: var(--radius-md);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        .insight-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; font-size: 0.95rem; }
+        .insight-item:last-child { margin-bottom: 0; }
+        
+        .action-area { display: flex; flex-direction: column; gap: 12px; margin-top: 32px; }
+    </style>
+</head>
+<body>
+
+<div class="glass-container">
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px;">
+        <div class="welcome-header">
+            <h2>Hello, {{ student.name }}</h2>
+            <p>Welcome to Project V</p>
+        </div>
+        <a href="/logout" class="btn secondary" style="padding: 10px 16px; font-size: 0.85rem;">Sign out</a>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="flash {% if category == 'error' %}error{% else %}success{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% if active_alert %}
+    <div class="alert-panel warning">
+        <div>
+            <strong>Quick Check-in Reminder</strong>
+            <p>Your mentor has requested a daily check-in. It only takes 20 seconds.</p>
+        </div>
+        <a href="/student/dismiss_alert" style="color: var(--text-muted); font-size: 0.8rem; margin-left: auto;">Dismiss</a>
+    </div>
+    {% endif %}
+
+    <div class="insight-card">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+            <strong style="color: var(--text-primary);">Today's Suggestions</strong>
+            {% if streak > 0 %}
+            <span style="color: var(--color-warning); font-weight: 600; font-size: 0.9rem;"> {{ streak }}-day streak!</span>
+            {% endif %}
+        </div>
+        
+        {% if messages and messages|length > 0 %}
+            {% for msg in messages[:3] %}
+            <div class="insight-item">
+                <span style="font-size: 1.2rem;">{{ msg.icon }}</span>
+                <span style="color: var(--text-secondary);">{{ msg.text }}</span>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="insight-item">
+                <span style="font-size: 1.2rem;"></span>
+                <span style="color: var(--text-secondary);">Remember to take breaks and stay hydrated today. You've got this!</span>
+            </div>
+            <div class="insight-item">
+                <span style="font-size: 1.2rem;"></span>
+                <span style="color: var(--text-secondary);">Your mentor is Dr. {{ student.mentor_name|default("Not Assigned") }}. Let them know if you need anything.</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Academic Record Section -->
+    <div class="insight-card" style="padding: 24px;">
+        <h3 style="margin: 0 0 16px 0; font-size: 1.1rem; color: var(--text-primary);">Academic Performance Details</h3>
+        {% if student.marks %}
+        <div style="margin-bottom: 16px;">
+            <label style="font-weight: 500; margin-right: 8px; font-size: 0.9rem; color: var(--text-secondary);">Select Semester:</label>
+            <select id="semSelect" onchange="showSemester(this.value)" style="padding: 6px; border-radius: 4px; border: 1px solid var(--border-light);">
+                {% for sem in student.marks.keys() %}
+                <option value="{{ sem }}">Semester {{ sem }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% for sem, marks_list in student.marks.items() %}
+        <div id="marks-sem-{{ sem }}" class="sem-marks" style="display: none;">
+            
+            {% set summary = student.sem_summaries.get(sem) %}
+            {% if summary %}
+            <div style="display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.9rem;">
+                <div><span style="color: var(--text-secondary);">Attendance:</span> <strong style="color: var(--text-primary);">{{ summary.attendance }}%</strong></div>
+                <div><span style="color: var(--text-secondary);">SGPA:</span> <strong style="color: var(--text-primary);">{{ summary.sgpa }}</strong></div>
+                <div><span style="color: var(--text-secondary);">CGPA:</span> <strong style="color: var(--text-primary);">{{ summary.cgpa }}</strong></div>
+                <div><span style="color: var(--text-secondary);">Activity Points:</span> <strong style="color: var(--text-primary);">{{ summary.activity_points }}</strong></div>
+            </div>
+            {% endif %}
+
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 0.95rem;">
+                    <tr style="background: #e2e8f0; border-bottom: 2px solid #cbd5e1;">
+                        <th style="padding: 10px; text-align: left; color: var(--text-secondary); font-weight: 600;">Subject</th>
+                        <th style="padding: 10px; text-align: center; color: var(--text-secondary); font-weight: 600;">CIE</th>
+                        <th style="padding: 10px; text-align: center; color: var(--text-secondary); font-weight: 600;">SEE</th>
+                        <th style="padding: 10px; text-align: center; color: var(--text-secondary); font-weight: 600;">Total</th>
+                        <th style="padding: 10px; text-align: center; color: var(--text-secondary); font-weight: 600;">ML Pass Prob.</th>
+                    </tr>
+                    {% for m in marks_list %}
+                        {% set cie = m.cie|default(0, true)|int %}
+                        {% set see = m.see|default(0, true)|int %}
+                        {% set total = cie + see %}
+                    <tr style="border-bottom: 1px solid #cbd5e1;">
+                        <td style="padding: 10px; text-align: left; font-weight: 500;">{{ m.subject }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ cie }}</td>
+                        <td style="padding: 10px; text-align: center;">{{ see }}</td>
+                        <td style="padding: 10px; text-align: center; color: var(--text-primary); font-weight: 600;">{{ total }}</td>
+                        <td style="padding: 10px; text-align: center;">
+                            {% if m.ml_pass_prob is defined and m.ml_pass_prob != -1 %}
+                                <span style="font-weight: 600; color: {% if m.ml_pass_prob >= 75 %}#059669{% elif m.ml_pass_prob >= 40 %}#d97706{% else %}#dc2626{% endif %};">{{ m.ml_pass_prob }}%</span>
+                            {% else %}
+                                <span style="color: var(--text-muted);">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+        <script>
+            function showSemester(sem) {
+                document.querySelectorAll('.sem-marks').forEach(el => el.style.display = 'none');
+                const target = document.getElementById('marks-sem-' + sem);
+                if (target) {
+                    target.style.display = 'block';
+                }
+            }
+            window.addEventListener('DOMContentLoaded', () => {
+                const select = document.getElementById('semSelect');
+                if(select && select.options.length > 0) {
+                    showSemester(select.options[0].value);
+                }
+            });
+        </script>
+        {% else %}
+        <div style="padding: 16px; text-align: center; color: var(--text-muted); background: #e2e8f0; border-radius: 6px;">
+            No academic marks recorded yet.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="action-area">
+        <a href="/student/daily_checkin" class="btn" style="width: 100%; font-size: 1.05rem; padding: 16px;">
+            Start Daily Check-in
+        </a>
+        <div style="text-align: center; padding: 12px; color: var(--text-muted); font-size: 0.85rem; background: #f1f5f9; border-radius: var(--radius-sm);">
+            Academic marks are uploaded by your mentor/teacher.
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

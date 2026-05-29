@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project V — Log In</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .login-wrapper {
+            max-width: 420px;
+            margin: 100px auto;
+            text-align: center;
+        }
+        .hero-title {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 32px;
+        }
+        .role-tabs input { display: none; }
+        .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; margin: 24px 0; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--border-light); }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
+    </style>
+</head>
+<body>
+
+<div class="glass-container login-wrapper">
+    <h1 class="hero-title">Project V</h1>
+    <p class="hero-subtitle">Intelligent Student Support System</p>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash error">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/login">
+        
+        <div class="role-tabs">
+            <input type="radio" name="role" id="r_student" value="student" {% if not preselect_admin %}checked{% endif %}>
+            <label for="r_student">Student</label>
+
+            <input type="radio" name="role" id="r_teacher" value="teacher">
+            <label for="r_teacher">Mentor</label>
+
+            <input type="radio" name="role" id="r_parent" value="parent">
+            <label for="r_parent">Parent</label>
+            
+            <input type="radio" name="role" id="r_admin" value="admin" {% if preselect_admin %}checked{% endif %}>
+            <label for="r_admin">Admin</label>
+        </div>
+
+        <div class="form-group">
+            <label id="usn-label">ID Number</label>
+            <input type="text" name="username" id="username-input" placeholder="Enter your ID" required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter your password" required>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%; margin-top: 8px;">Sign In</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <div style="display: flex; gap: 12px;">
+        <a href="/register" class="btn secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;">Register</a>
+        <a href="/forgot_password" class="btn secondary" style="flex: 1; padding: 12px; font-size: 0.9rem;">Forgot Password</a>
+    </div>
+
+</div>
+
+<script>
+    const labels = {
+        r_student: 'Student USN',
+        r_teacher: 'Mentor ID',
+        r_parent: 'Parent ID',
+        r_admin: 'Admin ID'
+    };
+    document.querySelectorAll('.role-tabs input').forEach(radio => {
+        radio.addEventListener('change', () => {
+            document.getElementById('usn-label').textContent = labels[radio.id] || 'ID Number';
+        });
+    });
+    const checked = document.querySelector('.role-tabs input:checked');
+    if (checked) document.getElementById('usn-label').textContent = labels[checked.id] || 'ID Number';
+</script>
+
+</body>
+</html>

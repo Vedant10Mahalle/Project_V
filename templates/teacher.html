@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project V — Mentor Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .dashboard-layout { display: grid; grid-template-columns: 320px 1fr; gap: 40px; padding: 40px; max-width: 1200px; margin: 0 auto; align-items: start; }
+        .sidebar { position: sticky; top: 40px; }
+        @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } .sidebar { position: relative; top: 0; } }
+        
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); }
+        .list-header h3 { margin: 0; font-size: 1.2rem; color: var(--text-primary); font-weight: 500; }
+        
+        .empty-state { padding: 40px; text-align: center; color: var(--text-secondary); background: #ffffff; border-radius: var(--radius-md); border: 1px dashed var(--border-light); }
+    </style>
+</head>
+<body>
+
+<div style="width: 100%; border-bottom: 1px solid var(--border-light); background: #ffffff;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 16px 40px; display: flex; justify-content: space-between; align-items: center;">
+        <h1 style="margin: 0; font-size: 1.4rem; font-weight: 600;">Project V</h1>
+        <div style="display: flex; gap: 16px; align-items: center;">
+            <span style="color: var(--text-secondary); font-size: 0.95rem;">Hello, {{ name }}</span>
+            <a href="/logout" class="btn secondary" style="padding: 8px 16px; font-size: 0.85rem;">Sign out</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-layout">
+    
+    <div class="sidebar">
+        <!-- Mentor Context -->
+        <div style="background: #ffffff; padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border-light); margin-bottom: 24px;">
+            <h2 style="margin: 0 0 8px 0; font-size: 1.1rem; font-weight: 500;">Mentor Tools</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin: 0 0 20px 0;">Send a subtle reminder to students who might have forgotten their daily check-in.</p>
+            
+            <form action="/teacher/notify_students" method="POST">
+                <button type="submit" class="btn secondary" style="width: 100%; text-align: left;">
+                    <span style="margin-right: 8px;"></span> Notify My Students
+                </button>
+            </form>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash {% if category == 'error' %}error{% else %}success{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Smart Alerts -->
+        {% if alerts and alerts|length > 0 %}
+            <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: var(--text-secondary);">Recent Insights</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for alert in alerts %}
+                <div style="padding: 16px; background: #ffffff; border-radius: var(--radius-sm); border-left: 3px solid {% if alert.type == 'danger' %}var(--color-danger){% else %}var(--color-warning){% endif %}; box-shadow: var(--shadow-soft);">
+                    <div style="font-size: 0.9rem; color: var(--text-primary);">{{ alert.message }}</div>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Student List -->
+    <div class="main-content">
+        
+        <div class="list-header">
+            <h3>Assigned Students ({{ students|length }})</h3>
+        </div>
+
+        {% if students|length == 0 %}
+        <div class="empty-state">
+            <span style="font-size: 2rem; display: block; margin-bottom: 12px;"></span>
+            No students assigned to you yet.
+        </div>
+        {% else %}
+        
+        <div class="student-list" style="margin-top: 0;">
+            {% for s in students %}
+            <a href="/teacher/student/{{ s.usn }}" class="student-row">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span class="status-dot {% if s.risk_level == 'High' %}danger{% elif s.risk_level == 'Medium' %}warning{% else %}success{% endif %}"></span>
+                    <div class="student-info">
+                        <h4>{{ s.name }}</h4>
+                        <p>{{ s.usn }}</p>
+                    </div>
+                </div>
+                
+                <div style="text-align: right; margin-right: 16px; flex: 1; display: flex; align-items: center; justify-content: flex-end; gap: 16px;">
+                    <div style="display: flex; flex-direction: column; text-align: right;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Dropout Probability</span>
+                        <strong class="{% if s.dropout_prob > 60 %}text-danger{% elif s.dropout_prob > 35 %}text-warning{% else %}text-success{% endif %}" style="font-size: 1.1rem; font-family: monospace;">{{ s.dropout_prob }}%</strong>
+                    </div>
+                </div>
+                
+                <span style="color: var(--text-muted);">→</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+</body>
+</html>

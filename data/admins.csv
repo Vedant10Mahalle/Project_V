@@ -1,0 +1,2 @@
+admin_id,name,password
+admin,System Administrator,scrypt:32768:8:1$AaJHvgVaSqxhAFEv$8caa8edb10f5d3c786717eb3a339c4b7902257976785b03b8c4ff476a12068e76ff2bdbfbbbbd2de545962ebc1a8bf3350bec965df0b8aedb193648dc0253560
